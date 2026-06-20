@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import ListBuilder from "@/components/ListBuilder";
 import { addRecipe, deleteRecipe, updateRecipe } from "@/lib/storage";
 import { EMPTY_RECIPE, type Recipe } from "@/lib/types";
 
@@ -24,6 +25,7 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
           title: recipe.title,
           photoUrl: recipe.photoUrl,
           ingredients: recipe.ingredients,
+          tools: recipe.tools,
           steps: recipe.steps,
           prepMinutes: recipe.prepMinutes,
           category: recipe.category,
@@ -114,23 +116,24 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
               </button>
             ))}
           </div>
-          <label className={labelCls}>Ingredientes (uno por línea)</label>
-          <textarea
-            value={draft.ingredients.join("\n")}
-            onChange={(e) =>
-              setDraft({ ...draft, ingredients: e.target.value.split("\n").filter(Boolean) })
-            }
-            rows={4}
-            className={`${inputCls} mb-3 resize-none`}
+          <ListBuilder
+            label="Ingredientes"
+            items={draft.ingredients}
+            onChange={(ingredients) => setDraft({ ...draft, ingredients })}
+            placeholder="Ej: 200g de harina"
           />
-          <label className={labelCls}>Pasos (uno por línea)</label>
-          <textarea
-            value={draft.steps.join("\n")}
-            onChange={(e) =>
-              setDraft({ ...draft, steps: e.target.value.split("\n").filter(Boolean) })
-            }
-            rows={5}
-            className={`${inputCls} mb-4 resize-none`}
+          <ListBuilder
+            label="Utensilios"
+            items={draft.tools}
+            onChange={(tools) => setDraft({ ...draft, tools })}
+            placeholder="Ej: Sartén honda"
+          />
+          <ListBuilder
+            label="Pasos"
+            items={draft.steps}
+            onChange={(steps) => setDraft({ ...draft, steps })}
+            numbered
+            placeholder="Siguiente paso..."
           />
           <div className="flex gap-2">
             <button
@@ -187,6 +190,22 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
                 ))}
               </ul>
             </div>
+            {recipe.tools.length > 0 && (
+              <div className="mb-5">
+                <div className="mb-2.5 border-b border-imperial-gold/20 pb-2">
+                  <span className="font-display text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-parchment-faint">
+                    🛠 Utensilios
+                  </span>
+                </div>
+                <ul className="flex flex-col gap-1.5">
+                  {recipe.tools.map((tool, i) => (
+                    <li key={i} className="text-[0.82rem] text-parchment-dim">
+                      • {tool}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="mb-5">
               <div className="mb-2.5 border-b border-imperial-gold/20 pb-2">
                 <span className="font-display text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-parchment-faint">
