@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+:root {
+  /* Negro carbón */
+  --color-imperial-charcoal: #070b17;
+  --color-imperial-charcoal-2: #0d1322;
+  --color-imperial-charcoal-3: #131c34;
+
+  /* Dorado envejecido */
+  --color-imperial-gold: #c89028;
+  --color-imperial-gold-bright: #f0c542;
+  --color-imperial-gold-dim: #8a6a28;
+
+  /* Borgoña */
+  --color-imperial-burgundy: #6b1422;
+  --color-imperial-burgundy-light: #8b1a2a;
+  --color-imperial-burgundy-bright: #a8243a;
+
+  /* Pergamino */
+  --color-parchment: #ecdfc2;
+  --color-parchment-dim: #c7b896;
+  --color-parchment-faint: #8a7e64;
+
+  --ease-imperial: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --color-imperial-charcoal: var(--color-imperial-charcoal);
+  --color-imperial-charcoal-2: var(--color-imperial-charcoal-2);
+  --color-imperial-charcoal-3: var(--color-imperial-charcoal-3);
+  --color-imperial-gold: var(--color-imperial-gold);
+  --color-imperial-gold-bright: var(--color-imperial-gold-bright);
+  --color-imperial-gold-dim: var(--color-imperial-gold-dim);
+  --color-imperial-burgundy: var(--color-imperial-burgundy);
+  --color-imperial-burgundy-light: var(--color-imperial-burgundy-light);
+  --color-imperial-burgundy-bright: var(--color-imperial-burgundy-bright);
+  --color-parchment: var(--color-parchment);
+  --color-parchment-dim: var(--color-parchment-dim);
+  --color-parchment-faint: var(--color-parchment-faint);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+html,
+body {
+  background: var(--color-imperial-charcoal);
+  color: var(--color-parchment);
+  font-family: var(--font-body), sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-imperial-charcoal-3);
+  border-radius: 3px;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-imperial-charcoal-3) transparent;
+}
+
+.font-display {
+  font-family: var(--font-display), serif;
+}
+
+.text-gold-glow {
+  text-shadow:
+    0 0 24px rgba(200, 144, 40, 0.35),
+    0 2px 18px rgba(0, 0, 0, 0.8);
+}
+
+.glass-panel {
+  background: rgba(13, 19, 34, 0.72);
+  border: 1px solid rgba(200, 144, 40, 0.22);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.imperial-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(200, 144, 40, 0.5),
+    transparent
+  );
+}
