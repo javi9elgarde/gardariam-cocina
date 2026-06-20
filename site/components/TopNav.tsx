@@ -6,7 +6,15 @@ export default function TopNav() {
   const { user, isAdmin, loading, signIn, signOutUser } = useAuth();
 
   return (
-    <nav className="glass-panel fixed left-1/2 top-4 z-[900] flex -translate-x-1/2 items-center gap-2 rounded-full px-3 py-1.5">
+    <nav className="glass-panel fixed left-1/2 top-4 z-[900] flex -translate-x-1/2 items-center gap-1 rounded-full px-3 py-1.5">
+      <a
+        href="https://gardariam.com"
+        title="Volver al Hub"
+        className="font-display rounded-full px-2.5 py-1.5 text-[0.58rem] uppercase tracking-[0.1em] text-parchment-faint transition-colors hover:bg-imperial-gold/10 hover:text-imperial-gold-bright"
+      >
+        ← Hub
+      </a>
+      <div className="h-5 w-px bg-imperial-gold/25" />
       <a
         href="https://gardariam.com"
         className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full"
