@@ -1,10 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import ListBuilder from "@/components/ListBuilder";
 import { addRecipe, deleteRecipe, updateRecipe } from "@/lib/storage";
-import { EMPTY_RECIPE, type Recipe } from "@/lib/types";
+import { CATEGORIES, EMPTY_RECIPE, type Recipe } from "@/lib/types";
 
 interface RecipePanelProps {
   recipe: Recipe | null;
@@ -12,235 +12,274 @@ interface RecipePanelProps {
   onClose: () => void;
 }
 
-const inputCls =
-  "w-full rounded border border-white/10 bg-imperial-charcoal-2 px-2.5 py-1.5 text-sm text-parchment outline-none focus:border-imperial-gold";
-const labelCls =
-  "font-display mb-1 block text-[0.56rem] uppercase tracking-[0.12em] text-parchment-faint";
-
 export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelProps) {
   const [mode, setMode] = useState<"view" | "edit">(recipe ? "view" : "edit");
+  const [page, setPage] = useState(0);
+  const [dir, setDir] = useState(1);
+  const [fav, setFav] = useState(recipe?.favorite ?? false);
   const [draft, setDraft] = useState<Omit<Recipe, "id">>(
     recipe
       ? {
           title: recipe.title,
           photoUrl: recipe.photoUrl,
-          ingredients: recipe.ingredients,
-          tools: recipe.tools,
-          steps: recipe.steps,
-          prepMinutes: recipe.prepMinutes,
+          pages: recipe.pages ?? [],
           category: recipe.category,
           rating: recipe.rating,
+          prepMinutes: recipe.prepMinutes,
+          persons: recipe.persons ?? 2,
+          favorite: recipe.favorite ?? false,
         }
       : EMPTY_RECIPE,
   );
 
+  const pages = recipe?.pages ?? [];
+
   function save() {
-    if (recipe) {
-      updateRecipe(recipe.id, draft);
-    } else {
-      addRecipe(draft);
-    }
+    if (recipe) updateRecipe(recipe.id, draft);
+    else addRecipe(draft);
     onClose();
   }
-
   function remove() {
     if (recipe) deleteRecipe(recipe.id);
     onClose();
   }
+  function toggleFav() {
+    if (!recipe) return;
+    const v = !fav;
+    setFav(v);
+    updateRecipe(recipe.id, { favorite: v });
+  }
+  function share() {
+    const url = pages[page] || recipe?.photoUrl || "";
+    if (navigator.share) navigator.share({ title: recipe?.title, url }).catch(() => {});
+    else if (url) window.open(url, "_blank");
+  }
+  function print() {
+    const url = pages[page];
+    if (!url) return;
+    const w = window.open("", "_blank");
+    if (w) {
+      w.document.write(
+        `<img src="${url}" style="max-width:100%" onload="window.print()"/>`,
+      );
+      w.document.close();
+    }
+  }
+  function go(d: number) {
+    setDir(d);
+    setPage((p) => Math.max(0, Math.min(pages.length - 1, p + d)));
+  }
 
   const showForm = mode === "edit" && isAdmin;
+  const inputCls = "book-input";
 
   return (
-    <motion.aside
-      initial={{ x: "100%" }}
-      animate={{ x: 0 }}
-      exit={{ x: "100%" }}
-      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      className="glass-panel fixed inset-y-0 right-0 z-[800] flex w-full max-w-sm flex-col overflow-y-auto border-l border-imperial-gold/20"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="recipe-overlay"
+      onClick={onClose}
     >
-      <button
-        onClick={onClose}
-        aria-label="Cerrar"
-        className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-imperial-gold/25 bg-imperial-charcoal/70 text-parchment-faint backdrop-blur transition-colors hover:border-imperial-gold hover:text-imperial-gold-bright"
+      <motion.div
+        initial={{ scale: 0.92, rotateY: -12, opacity: 0 }}
+        animate={{ scale: 1, rotateY: 0, opacity: 1 }}
+        exit={{ scale: 0.92, opacity: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="recipe-book"
+        onClick={(e) => e.stopPropagation()}
       >
-        ✕
-      </button>
+        <button className="recipe-close" onClick={onClose} aria-label="Cerrar">
+          ✕
+        </button>
 
-      {showForm ? (
-        <div className="p-5 pt-14">
-          <label className={labelCls}>Título</label>
-          <input
-            value={draft.title}
-            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-            className={`${inputCls} mb-3`}
-          />
-          <label className={labelCls}>URL de foto</label>
-          <input
-            value={draft.photoUrl}
-            onChange={(e) => setDraft({ ...draft, photoUrl: e.target.value })}
-            placeholder="https://imagen.com/foto.jpg"
-            className={`${inputCls} mb-3`}
-          />
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            <div>
-              <label className={labelCls}>Categoría</label>
-              <input
-                value={draft.category}
-                onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Minutos</label>
-              <input
-                type="number"
-                min={0}
-                value={draft.prepMinutes}
-                onChange={(e) => setDraft({ ...draft, prepMinutes: Number(e.target.value) })}
-                className={inputCls}
-              />
-            </div>
-          </div>
-          <label className={labelCls}>Valoración</label>
-          <div className="mb-3 flex gap-1">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setDraft({ ...draft, rating: n })}
-                className={`text-2xl leading-none transition-colors ${
-                  n <= draft.rating ? "" : "opacity-30"
-                }`}
-              >
-                🔥
-              </button>
-            ))}
-          </div>
-          <ListBuilder
-            label="Ingredientes"
-            items={draft.ingredients}
-            onChange={(ingredients) => setDraft({ ...draft, ingredients })}
-            placeholder="Ej: 200g de harina"
-          />
-          <ListBuilder
-            label="Utensilios"
-            items={draft.tools}
-            onChange={(tools) => setDraft({ ...draft, tools })}
-            placeholder="Ej: Sartén honda"
-          />
-          <ListBuilder
-            label="Pasos"
-            items={draft.steps}
-            onChange={(steps) => setDraft({ ...draft, steps })}
-            numbered
-            placeholder="Siguiente paso..."
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={save}
-              className="font-display flex-1 rounded bg-imperial-gold/18 py-2 text-[0.6rem] uppercase tracking-[0.1em] text-imperial-gold-bright"
-            >
-              Guardar
-            </button>
-            <button
-              onClick={() => (recipe ? setMode("view") : onClose())}
-              className="font-display rounded border border-white/10 px-3 py-2 text-[0.6rem] uppercase tracking-[0.1em] text-parchment-faint"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      ) : recipe ? (
-        <>
-          <div className="relative aspect-video w-full flex-shrink-0 overflow-hidden bg-imperial-charcoal-2">
-            {recipe.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={recipe.photoUrl} alt={recipe.title} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-5xl">🍲</div>
-            )}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-imperial-charcoal via-imperial-charcoal/10 to-transparent" />
-            <h2 className="text-gold-glow font-display absolute bottom-3 left-4 right-16 text-lg font-bold text-parchment">
-              {recipe.title}
-            </h2>
-          </div>
-
-          <div className="flex flex-shrink-0 items-center justify-between px-5 pt-4">
-            <span className="rounded border border-imperial-gold/20 bg-imperial-gold/10 px-2 py-1 text-[0.62rem] text-imperial-gold-text">
-              {recipe.category || "Receta"}
-            </span>
-            <span className="text-[0.62rem] text-parchment-faint">
-              ⏱ {recipe.prepMinutes} min
-            </span>
-            <span className="text-xs">{"🔥".repeat(Math.max(1, Math.min(5, recipe.rating)))}</span>
-          </div>
-
-          <div className="flex-1 px-5 py-5">
-            <div className="mb-5">
-              <div className="mb-2.5 border-b border-imperial-gold/20 pb-2">
-                <span className="font-display text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-parchment-faint">
-                  🌿 Ingredientes
-                </span>
-              </div>
-              <ul className="flex flex-col gap-1.5">
-                {recipe.ingredients.map((ing, i) => (
-                  <li key={i} className="text-[0.82rem] text-parchment-dim">
-                    • {ing}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {recipe.tools.length > 0 && (
-              <div className="mb-5">
-                <div className="mb-2.5 border-b border-imperial-gold/20 pb-2">
-                  <span className="font-display text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-parchment-faint">
-                    🛠 Utensilios
-                  </span>
-                </div>
-                <ul className="flex flex-col gap-1.5">
-                  {recipe.tools.map((tool, i) => (
-                    <li key={i} className="text-[0.82rem] text-parchment-dim">
-                      • {tool}
-                    </li>
+        {showForm ? (
+          <div className="recipe-form">
+            <h3 className="book-section-title" style={{ fontSize: "1.3rem" }}>
+              {recipe ? "Editar receta" : "Nueva receta"}
+            </h3>
+            <label className="book-label">Título</label>
+            <input
+              className={inputCls}
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            />
+            <label className="book-label">Imagen de la tarjeta (URL)</label>
+            <input
+              className={inputCls}
+              value={draft.photoUrl}
+              placeholder="https://imagen.com/plato.jpg"
+              onChange={(e) => setDraft({ ...draft, photoUrl: e.target.value })}
+            />
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="book-label">Categoría</label>
+                <select
+                  className={inputCls}
+                  value={draft.category}
+                  onChange={(e) => setDraft({ ...draft, category: e.target.value })}
+                >
+                  <option value="">—</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.id}
+                    </option>
                   ))}
-                </ul>
+                </select>
               </div>
-            )}
-            <div className="mb-5">
-              <div className="mb-2.5 border-b border-imperial-gold/20 pb-2">
-                <span className="font-display text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-parchment-faint">
-                  📜 Pasos
-                </span>
+              <div>
+                <label className="book-label">Minutos</label>
+                <input
+                  className={inputCls}
+                  type="number"
+                  min={0}
+                  value={draft.prepMinutes}
+                  onChange={(e) => setDraft({ ...draft, prepMinutes: Number(e.target.value) })}
+                />
               </div>
-              <ol className="flex flex-col gap-2.5">
-                {recipe.steps.map((step, i) => (
-                  <li key={i} className="text-[0.82rem] leading-relaxed text-parchment-dim">
-                    <span className="font-display mr-1.5 text-imperial-gold-text">{i + 1}.</span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
+              <div>
+                <label className="book-label">Personas</label>
+                <input
+                  className={inputCls}
+                  type="number"
+                  min={1}
+                  value={draft.persons}
+                  onChange={(e) => setDraft({ ...draft, persons: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+            <label className="book-label">Valoración</label>
+            <div className="mb-2 flex gap-1">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setDraft({ ...draft, rating: n })}
+                  style={{
+                    fontSize: "1.5rem",
+                    lineHeight: 1,
+                    color: n <= draft.rating ? "var(--oliva)" : "#c9b98f",
+                  }}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <label className="book-label" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <input
+                type="checkbox"
+                checked={draft.favorite}
+                onChange={(e) => setDraft({ ...draft, favorite: e.target.checked })}
+              />
+              Marcar como favorita
+            </label>
+            <div className="mt-3">
+              <ListBuilder
+                label="Páginas del libro (URLs de imagen, en orden)"
+                items={draft.pages}
+                onChange={(pages) => setDraft({ ...draft, pages })}
+                numbered
+                placeholder="https://imagen.com/pagina1.jpg"
+              />
+            </div>
+            <div className="mt-2 flex gap-2">
+              <button className="book-btn flex-1" onClick={save}>
+                Guardar
+              </button>
+              <button
+                className="book-btn book-btn-ghost"
+                onClick={() => (recipe ? setMode("view") : onClose())}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="recipe-view">
+            <div className="recipe-pages">
+              <AnimatePresence mode="wait" custom={dir}>
+                {pages.length > 0 ? (
+                  <motion.img
+                    key={page}
+                    custom={dir}
+                    initial={{ rotateY: dir > 0 ? 55 : -55, opacity: 0 }}
+                    animate={{ rotateY: 0, opacity: 1 }}
+                    exit={{ rotateY: dir > 0 ? -55 : 55, opacity: 0 }}
+                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className="recipe-page-img"
+                    src={pages[page]}
+                    alt={`${recipe?.title} página ${page + 1}`}
+                  />
+                ) : (
+                  <div className="recipe-page-empty">
+                    <div style={{ fontSize: "3rem" }}>📖</div>
+                    <p className="book-section-sub">Esta receta aún no tiene páginas.</p>
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {isAdmin && (
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={() => setMode("edit")}
-                  className="font-display flex-1 rounded border border-white/10 py-2 text-[0.6rem] uppercase tracking-[0.1em] text-parchment-faint transition-colors hover:border-imperial-gold/40 hover:text-imperial-gold-text"
-                >
-                  Editar
+            <div className="recipe-side">
+              <h2 className="book-section-title" style={{ fontSize: "1.4rem" }}>
+                {recipe?.title}
+              </h2>
+              <div className="recipe-side-meta">
+                {recipe?.category && <span>{recipe.category}</span>}
+                <span>⏱ {recipe?.prepMinutes} min</span>
+                <span>👤 {recipe?.persons ?? 2}</span>
+              </div>
+              <div className="rcard-stars" style={{ fontSize: "1rem" }}>
+                {"★".repeat(Math.max(1, Math.min(5, recipe?.rating ?? 5)))}
+              </div>
+
+              <div className="recipe-actions">
+                <button className="book-btn book-btn-ghost" onClick={toggleFav}>
+                  {fav ? "❤️ Favorita" : "🤍 Favorita"}
                 </button>
+                <button className="book-btn book-btn-ghost" onClick={print}>
+                  🖨 Imprimir
+                </button>
+                <button className="book-btn book-btn-ghost" onClick={share}>
+                  📱 Compartir
+                </button>
+              </div>
+
+              {isAdmin && (
+                <div className="mt-3 flex gap-2">
+                  <button className="book-btn book-btn-ghost" onClick={() => setMode("edit")}>
+                    ✎ Editar
+                  </button>
+                  <button
+                    className="book-btn book-btn-ghost"
+                    style={{ borderColor: "var(--granate)", color: "var(--granate)" }}
+                    onClick={remove}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {pages.length > 1 && (
+              <div className="recipe-nav">
+                <button className="book-btn book-btn-ghost" disabled={page === 0} onClick={() => go(-1)}>
+                  ← Anterior
+                </button>
+                <span className="recipe-pagenum">
+                  {page + 1} / {pages.length}
+                </span>
                 <button
-                  onClick={remove}
-                  className="font-display flex-1 rounded border border-white/10 py-2 text-[0.6rem] uppercase tracking-[0.1em] text-parchment-faint transition-colors hover:border-red-400/40 hover:text-red-300"
+                  className="book-btn book-btn-ghost"
+                  disabled={page === pages.length - 1}
+                  onClick={() => go(1)}
                 >
-                  Eliminar
+                  Siguiente →
                 </button>
               </div>
             )}
           </div>
-        </>
-      ) : null}
-    </motion.aside>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }

@@ -1,90 +1,532 @@
 @import "tailwindcss";
 
 :root {
-  /* Negro carbón */
-  --color-imperial-charcoal: #070b17;
-  --color-imperial-charcoal-2: #0d1322;
-  --color-imperial-charcoal-3: #131c34;
+  /* Paleta libro de cocina */
+  --paper: #f3e9cf;
+  --paper-2: #ecdfbe;
+  --paper-3: #e3d3ac;
+  --ink: #4a3826;
+  --ink-soft: #6e5740;
+  --ink-faint: #927b5c;
+  --nogal: #6e4a2a;
+  --wood: #9a6a34;
+  --wood-dark: #5e3d1e;
+  --oliva: #6f7a38;
+  --salvia: #8a9a6a;
+  --dorado: #c89a3c;
+  --naranja: #c8722c;
+  --granate: #9a2f2f;
 
-  /* Dorado envejecido */
+  --ease-book: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Compat con componentes antiguos */
   --color-imperial-gold: #c89028;
-  --color-imperial-gold-bright: #f0c542;
-  --color-imperial-gold-dim: #8a6a28;
+  --color-imperial-gold-bright: #b57a1e;
+  --color-parchment: #4a3826;
 
-  /* Borgoña */
-  --color-imperial-burgundy: #6b1422;
-  --color-imperial-burgundy-light: #8b1a2a;
-  --color-imperial-burgundy-bright: #a8243a;
-
-  /* Pergamino */
-  --color-parchment: #ecdfc2;
-  --color-parchment-dim: #c7b896;
-  --color-parchment-faint: #8a7e64;
-
-  --ease-imperial: cubic-bezier(0.16, 1, 0.3, 1);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
 }
 
 @theme inline {
-  --color-imperial-charcoal: var(--color-imperial-charcoal);
-  --color-imperial-charcoal-2: var(--color-imperial-charcoal-2);
-  --color-imperial-charcoal-3: var(--color-imperial-charcoal-3);
-  --color-imperial-gold: var(--color-imperial-gold);
-  --color-imperial-gold-bright: var(--color-imperial-gold-bright);
-  --color-imperial-gold-dim: var(--color-imperial-gold-dim);
-  --color-imperial-burgundy: var(--color-imperial-burgundy);
-  --color-imperial-burgundy-light: var(--color-imperial-burgundy-light);
-  --color-imperial-burgundy-bright: var(--color-imperial-burgundy-bright);
-  --color-parchment: var(--color-parchment);
-  --color-parchment-dim: var(--color-parchment-dim);
-  --color-parchment-faint: var(--color-parchment-faint);
-
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-nogal: var(--nogal);
+  --color-wood: var(--wood);
+  --color-oliva: var(--oliva);
+  --color-salvia: var(--salvia);
+  --color-dorado: var(--dorado);
+  --color-naranja: var(--naranja);
+  --color-granate: var(--granate);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
 }
 
 html,
 body {
-  background: var(--color-imperial-charcoal);
-  color: var(--color-parchment);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-body), sans-serif;
-}
-
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-imperial-charcoal-3);
-  border-radius: 3px;
-}
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-imperial-charcoal-3) transparent;
 }
 
 .font-display {
   font-family: var(--font-display), serif;
 }
 
-.text-gold-glow {
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(110, 74, 42, 0.4);
+  border-radius: 4px;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(110, 74, 42, 0.4) transparent;
+}
+
+/* ===== Fondo papel de libro ===== */
+.cocina-book {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(150, 110, 60, 0.12), transparent 30%),
+    radial-gradient(circle at 88% 92%, rgba(150, 110, 60, 0.12), transparent 32%),
+    radial-gradient(circle at 70% 20%, rgba(200, 114, 44, 0.06), transparent 28%),
+    linear-gradient(160deg, #f5ecd4 0%, #efe2c2 55%, #e7d7b2 100%);
+}
+/* Manchitas sutiles */
+.cocina-book::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 25% 40%, rgba(150, 110, 60, 0.05) 0 6px, transparent 7px),
+    radial-gradient(circle at 65% 70%, rgba(150, 110, 60, 0.04) 0 5px, transparent 6px),
+    radial-gradient(circle at 82% 30%, rgba(200, 114, 44, 0.04) 0 4px, transparent 5px);
+  background-size: 100% 100%;
+  opacity: 0.7;
+}
+
+/* ===== Cartel de madera (header) ===== */
+.book-sign {
+  position: relative;
+  display: inline-block;
+  text-align: center;
+  padding: 1.6rem 2.6rem 1.3rem;
+  border-radius: 18px;
+  background:
+    repeating-linear-gradient(
+      92deg,
+      rgba(120, 78, 40, 0.08) 0 7px,
+      rgba(90, 58, 28, 0.08) 7px 14px
+    ),
+    linear-gradient(150deg, #c89658 0%, #a9762f 50%, #92621f 100%);
+  border: 4px solid #6e4a24;
+  box-shadow:
+    0 10px 26px rgba(60, 40, 20, 0.4),
+    inset 0 0 0 2px rgba(240, 220, 170, 0.25),
+    inset 0 2px 10px rgba(255, 240, 200, 0.2);
+}
+.book-sign::before,
+.book-sign::after {
+  content: "";
+  position: absolute;
+  top: -28px;
+  width: 3px;
+  height: 30px;
+  background: linear-gradient(#7a5a2a, #5e3d1e);
+}
+.book-sign::before { left: 24%; transform: rotate(9deg); }
+.book-sign::after { right: 24%; transform: rotate(-9deg); }
+.book-sign-title {
+  font-family: var(--font-display), serif;
+  font-size: clamp(0.9rem, 2vw, 1.15rem);
+  letter-spacing: 0.14em;
+  color: #5e3d1e;
+  text-transform: uppercase;
+}
+.book-sign-names {
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  font-size: clamp(1.7rem, 5vw, 2.9rem);
+  line-height: 1.02;
+  color: #f3d68a;
   text-shadow:
-    0 0 24px rgba(200, 144, 40, 0.35),
-    0 2px 18px rgba(0, 0, 0, 0.8);
+    0 2px 0 #7a4a12,
+    0 0 12px rgba(200, 150, 60, 0.4);
+  letter-spacing: 0.04em;
+}
+.book-sign-sub {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+  color: #7a3a2a;
+  background: #f0dcc0;
+  border: 1px solid rgba(150, 47, 47, 0.35);
+  border-radius: 999px;
+  padding: 0.25em 1.1em;
+  box-shadow: 0 2px 6px rgba(60, 40, 20, 0.2);
 }
 
-.glass-panel {
-  background: rgba(13, 19, 34, 0.72);
-  border: 1px solid rgba(200, 144, 40, 0.22);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* ===== Buscador etiqueta ===== */
+.book-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  background: linear-gradient(#faf3df, #efe2c2);
+  border: 2px solid #9a6a34;
+  border-radius: 999px;
+  padding: 0.7rem 1.4rem;
+  box-shadow:
+    inset 0 2px 5px rgba(110, 74, 42, 0.14),
+    0 3px 8px rgba(60, 40, 20, 0.12);
+}
+.book-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-display), serif;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.book-search input::placeholder {
+  color: rgba(110, 90, 60, 0.6);
 }
 
-.imperial-divider {
+/* ===== Pestañas de categoría (madera) ===== */
+.cat-row {
+  display: flex;
+  gap: 0.7rem;
+  overflow-x: auto;
+  padding: 0.3rem 0.2rem 0.7rem;
+  scroll-snap-type: x proximity;
+}
+.cat-tab {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 84px;
+  padding: 0.6rem 0.9rem 0.5rem;
+  border-radius: 14px 14px 10px 10px;
+  cursor: pointer;
+  scroll-snap-align: start;
+  font-family: var(--font-display), serif;
+  font-size: 0.78rem;
+  color: #5e3d1e;
+  background:
+    repeating-linear-gradient(90deg, rgba(120, 78, 40, 0.06) 0 6px, rgba(90, 58, 28, 0.06) 6px 12px),
+    linear-gradient(160deg, #e7c689 0%, #cba15a 55%, #b9863d 100%);
+  border: 2px solid #7a5228;
+  box-shadow: 0 4px 8px rgba(60, 40, 20, 0.18);
+  transition:
+    transform 0.18s var(--ease-book),
+    box-shadow 0.18s var(--ease-book),
+    filter 0.18s var(--ease-book);
+}
+.cat-tab-emoji { font-size: 1.35rem; line-height: 1; }
+.cat-tab:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 14px rgba(60, 40, 20, 0.28);
+}
+.cat-tab.active {
+  filter: brightness(1.08);
+  box-shadow:
+    0 0 0 2px rgba(154, 47, 47, 0.7),
+    0 7px 14px rgba(60, 40, 20, 0.3);
+}
+
+/* ===== Título de sección ===== */
+.book-section-title {
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  color: var(--nogal);
+  letter-spacing: 0.02em;
+}
+.book-section-sub {
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+.book-divider {
   height: 1px;
   background: linear-gradient(
     to right,
     transparent,
-    rgba(200, 144, 40, 0.5),
+    rgba(110, 74, 42, 0.4),
     transparent
   );
+}
+
+/* ===== Tarjeta = hoja del libro ===== */
+.rcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding: 0;
+  background: linear-gradient(160deg, #fbf5e4 0%, #f2e6c9 100%);
+  border: 1.5px solid rgba(110, 74, 42, 0.35);
+  border-radius: 6px;
+  box-shadow:
+    0 3px 10px rgba(60, 40, 20, 0.18),
+    inset 0 0 0 3px rgba(255, 250, 235, 0.5);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform 0.28s var(--ease-book),
+    box-shadow 0.28s var(--ease-book);
+}
+.rcard:hover {
+  transform: translateY(-6px) rotate(-0.4deg);
+  box-shadow:
+    0 16px 30px rgba(60, 40, 20, 0.3),
+    inset 0 0 0 3px rgba(255, 250, 235, 0.6);
+}
+.rcard-img {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  object-fit: cover;
+  background: #e7d7b2;
+  border-bottom: 1px solid rgba(110, 74, 42, 0.25);
+}
+.rcard-img-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+}
+.rcard-body {
+  padding: 0.7rem 0.9rem 0.9rem;
+}
+.rcard-title {
+  font-family: var(--font-display), serif;
+  font-weight: 700;
+  font-size: 1.02rem;
+  line-height: 1.15;
+  color: var(--nogal);
+}
+.rcard-stars {
+  margin-top: 0.35rem;
+  color: var(--oliva);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+}
+.rcard-meta {
+  margin-top: 0.55rem;
+  display: flex;
+  gap: 1rem;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  border-top: 1px dashed rgba(110, 74, 42, 0.28);
+  padding-top: 0.5rem;
+}
+/* Marcapáginas de favorita */
+.rcard-fav {
+  position: absolute;
+  top: -2px;
+  left: 14px;
+  width: 22px;
+  height: 34px;
+  background: var(--granate);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  color: #f3d68a;
+  font-size: 0.6rem;
+  padding-top: 3px;
+}
+
+/* ===== Botones ===== */
+.book-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-display), serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #f3ead2;
+  background: linear-gradient(160deg, #7c8a44 0%, #616e33 100%);
+  border: 2px solid #4f5a28;
+  border-radius: 999px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(60, 40, 20, 0.22);
+  transition: transform 0.14s var(--ease-book), filter 0.14s var(--ease-book);
+}
+.book-btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+.book-btn:active { transform: scale(0.97); }
+.book-btn-ghost {
+  color: var(--nogal);
+  background: linear-gradient(#faf3df, #efe2c2);
+  border: 2px solid #9a6a34;
+}
+
+/* FAB añadir receta */
+.book-fab {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.4rem;
+  z-index: 40;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  font-family: var(--font-display), serif;
+  font-size: 0.6rem;
+  line-height: 1;
+  text-align: center;
+  color: #f3ead2;
+  background: radial-gradient(circle at 35% 30%, #8a984c, #5f6d31);
+  border: 3px solid #4f5a28;
+  box-shadow: 0 6px 16px rgba(60, 40, 20, 0.4);
+  cursor: pointer;
+}
+.book-top-link {
+  font-family: var(--font-display), serif;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nogal);
+  background: linear-gradient(#faf3df, #efe2c2);
+  border: 1.5px solid #9a6a34;
+  border-radius: 999px;
+  padding: 0.45em 0.9em;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.book-top-link:hover { filter: brightness(1.05); }
+
+/* ===== Panel receta (libro que se abre) ===== */
+.recipe-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(40, 26, 14, 0.55);
+  backdrop-filter: blur(3px);
+  perspective: 1600px;
+}
+.recipe-book {
+  position: relative;
+  width: 100%;
+  max-width: 940px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(150, 110, 60, 0.12), transparent 30%),
+    linear-gradient(160deg, #f7eed6 0%, #efe2c2 100%);
+  border: 3px solid #6e4a24;
+  box-shadow: 0 24px 60px rgba(30, 18, 8, 0.6), inset 0 0 0 3px rgba(255, 250, 235, 0.5);
+  transform-style: preserve-3d;
+}
+.recipe-close {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 10;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #9a6a34;
+  background: linear-gradient(#faf3df, #efe2c2);
+  color: var(--nogal);
+  cursor: pointer;
+}
+.recipe-view {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1rem;
+  padding: 1.4rem;
+}
+.recipe-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+}
+.recipe-page-img {
+  max-width: 100%;
+  max-height: 74vh;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(60, 40, 20, 0.35);
+  transform-origin: left center;
+}
+.recipe-page-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--ink-faint);
+}
+.recipe-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-top: 1.4rem;
+}
+.recipe-side-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.recipe-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.5rem;
+}
+.recipe-actions .book-btn { justify-content: center; }
+.recipe-nav {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed rgba(110, 74, 42, 0.3);
+}
+.recipe-pagenum {
+  font-family: var(--font-display), serif;
+  color: var(--nogal);
+  font-size: 0.9rem;
+}
+.recipe-form {
+  padding: 2rem 1.4rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.book-label {
+  font-family: var(--font-display), serif;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  margin-top: 0.4rem;
+}
+.book-input {
+  width: 100%;
+  border: 1.5px solid #b58a4c;
+  background: #faf3df;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+  outline: none;
+}
+.book-input:focus { border-color: var(--oliva); }
+.recipe-actions .book-btn:disabled,
+.recipe-nav .book-btn:disabled { opacity: 0.4; cursor: default; }
+
+@media (max-width: 720px) {
+  .recipe-view { grid-template-columns: 1fr; }
+  .recipe-side { padding-top: 0; }
 }
