@@ -1,6 +1,11 @@
 import { collection, deleteDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
+import { SEED_RECIPES } from "./seed";
 import { Recipe } from "./types";
+
+const seedMap: Record<string, Recipe> = Object.fromEntries(
+  SEED_RECIPES.map((r) => [r.id, r]),
+);
 
 const isBrowser = typeof window !== "undefined";
 
@@ -37,11 +42,18 @@ function initFirestoreSync(): void {
 initFirestoreSync();
 
 export function getRecipes(): Recipe[] {
-  return Object.values(recipesCache).sort((a, b) => a.title.localeCompare(b.title));
+  // seed del libro + Firestore; se fusiona por campos (Firestore manda)
+  const ids = new Set([...Object.keys(seedMap), ...Object.keys(recipesCache)]);
+  const out: Recipe[] = [];
+  ids.forEach((id) => {
+    out.push({ ...seedMap[id], ...recipesCache[id] } as Recipe);
+  });
+  return out.sort((a, b) => a.title.localeCompare(b.title));
 }
 
 export function getRecipe(id: string): Recipe | undefined {
-  return recipesCache[id];
+  if (!seedMap[id] && !recipesCache[id]) return undefined;
+  return { ...seedMap[id], ...recipesCache[id] } as Recipe;
 }
 
 export function addRecipe(recipe: Omit<Recipe, "id">): string {
@@ -53,9 +65,9 @@ export function addRecipe(recipe: Omit<Recipe, "id">): string {
 }
 
 export function updateRecipe(id: string, patch: Partial<Omit<Recipe, "id">>): void {
-  const current = recipesCache[id];
+  const current = recipesCache[id] ?? seedMap[id];
   if (!current) return;
-  recipesCache = { ...recipesCache, [id]: { ...current, ...patch } };
+  recipesCache = { ...recipesCache, [id]: { ...current, ...patch, id } };
   notify();
   void setDoc(doc(db, "recipes", id), patch, { merge: true });
 }
