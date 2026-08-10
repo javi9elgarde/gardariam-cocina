@@ -10,6 +10,19 @@ import { CATEGORIES, type Recipe } from "@/lib/types";
 
 const FAV = "__fav__";
 
+const CAT_ICON: Record<string, string> = {
+  Entrantes: "entrantes",
+  Carnes: "carnes",
+  Pasta: "pasta",
+  Arroces: "arroces",
+  Pescados: "pescados",
+  Vegetarianas: "vegetarianas",
+  Postres: "postres",
+  Desayunos: "desayunos",
+  "Salsas y bases": "salsas",
+  Bebidas: "bebidas",
+};
+
 function norm(s: string) {
   return s
     .toLowerCase()
@@ -41,8 +54,8 @@ export default function Home() {
 
   return (
     <div className="cocina-book">
-      {/* Barra superior: volver al hub + login */}
-      <div className="relative z-20 flex items-center justify-between px-4 pt-4">
+      {/* Barra superior */}
+      <div className="relative z-30 flex items-center justify-between px-4 pt-3">
         <a href="https://gardariam.com" className="book-top-link">
           ← Hub
         </a>
@@ -57,20 +70,17 @@ export default function Home() {
         )}
       </div>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 pb-28 pt-6">
-        {/* Cartel header */}
-        <div className="flex justify-center pt-6">
-          <div className="book-sign">
-            <div className="book-sign-title">📖 Libro de Cocina</div>
-            <div className="book-sign-names">
-              Mariam <span style={{ color: "#e88" }}>&amp;</span> Javi
-            </div>
-            <div className="book-sign-sub">Recetas hechas con amor ♥</div>
-          </div>
-        </div>
+      {/* Cabecera: franja granja + cartel */}
+      <header className="cocina-header">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="cocina-granja" src="/cocina/granja.png" alt="" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="cocina-sign" src="/cocina/sign.png" alt="Libro de Cocina Mariam & Javi" />
+      </header>
 
+      <main className="relative z-10 mx-auto max-w-6xl px-4 pb-40">
         {/* Buscador */}
-        <div className="mt-8">
+        <div className="mt-6">
           <label className="book-search">
             <span aria-hidden>🔍</span>
             <input
@@ -81,40 +91,41 @@ export default function Home() {
           </label>
         </div>
 
-        {/* Categorías */}
-        <div className="mt-6">
-          <div className="cat-row">
+        {/* Categorías (iconos madera) */}
+        <div className="cat-row mt-6">
+          <button
+            className={`cat-icon-btn ${cat === null ? "active" : ""}`}
+            onClick={() => setCat(null)}
+            title="Todas"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/cocina/cat/todas.png" alt="Todas" />
+          </button>
+          {CATEGORIES.map((c) => (
             <button
-              className={`cat-tab ${cat === null ? "active" : ""}`}
-              onClick={() => setCat(null)}
+              key={c.id}
+              className={`cat-icon-btn ${cat === c.id ? "active" : ""}`}
+              onClick={() => setCat(cat === c.id ? null : c.id)}
+              title={c.id}
             >
-              <span className="cat-tab-emoji">🍽️</span>
-              Todas
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/cocina/cat/${CAT_ICON[c.id]}.png`} alt={c.id} />
             </button>
-            {CATEGORIES.map((c) => (
-              <button
-                key={c.id}
-                className={`cat-tab ${cat === c.id ? "active" : ""}`}
-                onClick={() => setCat(cat === c.id ? null : c.id)}
-              >
-                <span className="cat-tab-emoji">{c.emoji}</span>
-                {c.id}
-              </button>
-            ))}
-            <button
-              className={`cat-tab ${cat === FAV ? "active" : ""}`}
-              onClick={() => setCat(cat === FAV ? null : FAV)}
-            >
-              <span className="cat-tab-emoji">⭐</span>
-              Favoritas
-            </button>
-          </div>
+          ))}
+          <button
+            className={`cat-icon-btn ${cat === FAV ? "active" : ""}`}
+            onClick={() => setCat(cat === FAV ? null : FAV)}
+            title="Favoritas"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/cocina/cat/favoritas.png" alt="Favoritas" />
+          </button>
         </div>
 
         {/* Título sección */}
         <div className="mt-8 text-center">
           <div className="book-divider mx-auto mb-4 max-w-md" />
-          <h2 className="book-section-title">Nuestras recetas</h2>
+          <h2 className="book-section-title">❧ Nuestras recetas ❧</h2>
           <p className="book-section-sub mt-1">
             Cada receta cuenta una historia, cada bocado un recuerdo ♥
           </p>
@@ -124,9 +135,7 @@ export default function Home() {
         <div className="mt-8">
           {filtered.length === 0 ? (
             <p className="py-12 text-center italic text-ink-faint">
-              {recipes.length === 0
-                ? "Aún no hay recetas en el libro."
-                : "No hay recetas que coincidan."}
+              No hay recetas que coincidan.
             </p>
           ) : (
             <div
@@ -140,6 +149,16 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      {/* Estantería decorativa + mascotas */}
+      <div className="cocina-foot">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="cocina-mascota" src="/cocina/mascota-saluda.png" alt="" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="cocina-shelf" src="/cocina/shelf.png" alt="" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="cocina-gallina" src="/cocina/gallina.png" alt="" />
+      </div>
 
       {isAdmin && (
         <button className="book-fab" onClick={() => setSelected("new")}>
