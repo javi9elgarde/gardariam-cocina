@@ -2,6 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import BookCover from "@/components/BookCover";
 import BookReader from "@/components/BookReader";
 import RecipeCard from "@/components/RecipeCard";
 import RecipePanel from "@/components/RecipePanel";
@@ -39,6 +40,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [bookPage, setBookPage] = useState<number | null>(null);
+  const [openAnim, setOpenAnim] = useState(false);
 
   useEffect(() => {
     setRecipes(getRecipes());
@@ -132,9 +134,16 @@ export default function Home() {
           <p className="book-section-sub mt-1">
             Cada receta cuenta una historia, cada bocado un recuerdo ♥
           </p>
-          <button className="book-btn mt-4" onClick={() => setBookPage(0)}>
-            📖 Abrir el libro
-          </button>
+        </div>
+
+        {/* Portada del libro: se abre con animación */}
+        <div className="mt-6">
+          <BookCover
+            onOpen={() => {
+              setOpenAnim(true);
+              setBookPage(0);
+            }}
+          />
         </div>
 
         {/* Rejilla */}
@@ -183,7 +192,15 @@ export default function Home() {
 
       <AnimatePresence>
         {bookPage !== null && (
-          <BookReader startPage={bookPage} onClose={() => setBookPage(null)} />
+          <BookReader
+            key={`book-${bookPage}-${openAnim ? "anim" : "direct"}`}
+            startPage={bookPage}
+            animateOpen={openAnim}
+            onClose={() => {
+              setBookPage(null);
+              setOpenAnim(false);
+            }}
+          />
         )}
       </AnimatePresence>
 

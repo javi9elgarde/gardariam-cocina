@@ -22,6 +22,16 @@ export const BOOK_SECTIONS: BookSection[] = [
   { id: "retos", label: "Retos", emoji: "⭐", page: 39 },
 ];
 
+/** ¿qué receta se está viendo en estas páginas? (para la ficha resumen) */
+export function recipeIdForPage(...pages: number[]): string | null {
+  const entries = Object.entries(RECIPE_PAGE).sort((a, b) => b[1] - a[1]);
+  for (const p of pages) {
+    const hit = entries.find(([, start]) => p === start || p === start + 1);
+    if (hit) return hit[0];
+  }
+  return null;
+}
+
 /** receta -> primera página en el libro */
 export const RECIPE_PAGE: Record<string, number> = {
   "panceta-puerros": 5,
