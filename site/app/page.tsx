@@ -2,16 +2,16 @@
 
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import BookCover from "@/components/BookCover";
+import OpenBook from "@/components/book/OpenBook";
 import BookReader from "@/components/BookReader";
-import RecipeCard from "@/components/RecipeCard";
 import RecipePanel from "@/components/RecipePanel";
 import { RECIPE_PAGE } from "@/lib/book";
 import { useAuth } from "@/lib/auth";
 import { getRecipes, onStorageChange } from "@/lib/storage";
+import { useFavorites } from "@/lib/useFavorites";
 import { CATEGORIES, type Recipe } from "@/lib/types";
 
-const FAV = "__fav__";
+type Tab = "recetas" | "favoritas" | "colecciones" | "nosotros";
 
 const CAT_ICON: Record<string, string> = {
   Entrantes: "entrantes",
@@ -35,156 +35,211 @@ function norm(s: string) {
 
 export default function Home() {
   const { isAdmin, user, loading, signIn, signOutUser } = useAuth();
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [selected, setSelected] = useState<Recipe | null | "new">(null);
+  const { isFav, toggle: toggleFavorite } = useFavorites();
+  const [rawRecipes, setRawRecipes] = useState<Recipe[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Recipe | null | "new">(null);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("recetas");
   const [bookPage, setBookPage] = useState<number | null>(null);
-  const [openAnim, setOpenAnim] = useState(false);
 
   useEffect(() => {
-    setRecipes(getRecipes());
-    return onStorageChange(() => setRecipes(getRecipes()));
+    const load = () => setRawRecipes(getRecipes());
+    load();
+    return onStorageChange(load);
   }, []);
+
+  // favorito viene del dispositivo, no de Firestore
+  const recipes = useMemo(
+    () => rawRecipes.map((r) => ({ ...r, favorite: isFav(r.id) })),
+    [rawRecipes, isFav],
+  );
+
+  const selected = useMemo(
+    () => recipes.find((r) => r.id === selectedId) ?? null,
+    [recipes, selectedId],
+  );
+
+  // primera receta seleccionada por defecto
+  useEffect(() => {
+    if (!selectedId && recipes.length) {
+      setSelectedId((recipes.find((r) => r.pages?.length) ?? recipes[0]).id);
+    }
+  }, [recipes, selectedId]);
 
   const filtered = useMemo(() => {
     const q = norm(query.trim());
     return recipes.filter((r) => {
-      if (cat === FAV && !r.favorite) return false;
-      if (cat && cat !== FAV && r.category !== cat) return false;
+      if (tab === "favoritas" && !r.favorite) return false;
+      if (cat && r.category !== cat) return false;
       if (q && !norm(r.title).includes(q)) return false;
       return true;
     });
-  }, [recipes, query, cat]);
+  }, [recipes, query, cat, tab]);
+
+  const stats = useMemo(
+    () => ({
+      recetas: recipes.length,
+      categorias: new Set(recipes.map((r) => r.category).filter(Boolean)).size,
+      favoritas: recipes.filter((r) => r.favorite).length,
+      minutos: recipes.reduce((a, r) => a + (r.prepMinutes || 0), 0),
+    }),
+    [recipes],
+  );
+
+  function toggleFav(r: Recipe) {
+    toggleFavorite(r.id);
+  }
+
+  function openOriginal(r: Recipe | null) {
+    const p = r ? RECIPE_PAGE[r.id] : undefined;
+    setBookPage(p ?? 0);
+  }
 
   return (
-    <div className="cocina-book">
-      {/* Barra superior */}
-      <div className="relative z-30 flex items-center justify-between px-4 pt-3">
-        <a href="https://gardariam.com" className="book-top-link">
-          ← Hub
+    <div className="farm">
+      {/* ---------- Navegación ---------- */}
+      <nav className="farm-nav">
+        <a className="farm-brand" href="https://gardariam.com">
+          🏠 Cocina
+          <br />
+          Gardariam
         </a>
-        {!loading && (
-          <button
-            className="book-top-link"
-            onClick={() => (user ? signOutUser() : signIn())}
-            title={user ? user.email ?? "" : "Iniciar sesión"}
-          >
-            {user ? (isAdmin ? "⚜ Admin" : "Salir") : "Iniciar sesión"}
-          </button>
-        )}
-      </div>
-
-      {/* Cabecera: franja granja + cartel */}
-      <header className="cocina-header">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="cocina-granja" src="/cocina/granja.png" alt="" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="cocina-sign" src="/cocina/sign.png" alt="Libro de Cocina Mariam & Javi" />
-      </header>
-
-      <main className="relative z-10 mx-auto max-w-6xl px-4 pb-40">
-        {/* Buscador */}
-        <div className="mt-6">
-          <label className="book-search">
-            <span aria-hidden>🔍</span>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar receta..."
-            />
-          </label>
-        </div>
-
-        {/* Categorías (iconos madera) */}
-        <div className="cat-row mt-6">
-          <button
-            className={`cat-icon-btn ${cat === null ? "active" : ""}`}
-            onClick={() => setCat(null)}
-            title="Todas"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/cocina/cat/todas.png" alt="Todas" />
-          </button>
-          {CATEGORIES.map((c) => (
+        <div className="farm-links">
+          {(
+            [
+              ["recetas", "📖 Recetas"],
+              ["favoritas", "❤️ Favoritas"],
+              ["colecciones", "📦 Colecciones"],
+              ["nosotros", "👥 Nosotros"],
+            ] as [Tab, string][]
+          ).map(([id, label]) => (
             <button
-              key={c.id}
-              className={`cat-icon-btn ${cat === c.id ? "active" : ""}`}
-              onClick={() => setCat(cat === c.id ? null : c.id)}
-              title={c.id}
+              key={id}
+              className={`farm-link ${tab === id ? "active" : ""}`}
+              onClick={() => setTab(id)}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/cocina/cat/${CAT_ICON[c.id]}.png`} alt={c.id} />
+              {label}
             </button>
           ))}
-          <button
-            className={`cat-icon-btn ${cat === FAV ? "active" : ""}`}
-            onClick={() => setCat(cat === FAV ? null : FAV)}
-            title="Favoritas"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/cocina/cat/favoritas.png" alt="Favoritas" />
-          </button>
         </div>
-
-        {/* Título sección */}
-        <div className="mt-8 text-center">
-          <div className="book-divider mx-auto mb-4 max-w-md" />
-          <h2 className="book-section-title">❧ Nuestras recetas ❧</h2>
-          <p className="book-section-sub mt-1">
-            Cada receta cuenta una historia, cada bocado un recuerdo ♥
-          </p>
-        </div>
-
-        {/* Portada del libro: se abre con animación */}
-        <div className="mt-6">
-          <BookCover
-            onOpen={() => {
-              setOpenAnim(true);
-              setBookPage(0);
-            }}
-          />
-        </div>
-
-        {/* Rejilla */}
-        <div className="mt-8">
-          {filtered.length === 0 ? (
-            <p className="py-12 text-center italic text-ink-faint">
-              No hay recetas que coincidan.
-            </p>
-          ) : (
-            <div
-              className="grid gap-5"
-              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}
+        <div className="farm-user">
+          {!loading && (
+            <button
+              className="farm-link"
+              onClick={() => (user ? signOutUser() : signIn())}
+              title={user ? (user.email ?? "") : "Iniciar sesión"}
             >
-              {filtered.map((r) => (
-                <RecipeCard
-                  key={r.id}
-                  recipe={r}
-                  onClick={() => {
-                    const p = RECIPE_PAGE[r.id];
-                    if (p !== undefined) setBookPage(p);
-                    else setSelected(r);
-                  }}
-                />
+              {user ? (isAdmin ? "⚜ Admin" : "Salir") : "Entrar"}
+            </button>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="farm-avatar" src="/cocina/mascota-chef.png" alt="" />
+        </div>
+      </nav>
+
+      {/* ---------- Cartel ---------- */}
+      <header className="farm-head">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="farm-sign-img"
+          src="/cocina/sign.png"
+          alt="Libro de Cocina Mariam & Javi"
+        />
+      </header>
+
+      {tab === "recetas" || tab === "favoritas" ? (
+        <>
+          {/* ---------- Buscador + categorías ---------- */}
+          <div className="farm-tools">
+            <label className="book-search">
+              <span aria-hidden>🔍</span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar receta..."
+              />
+            </label>
+
+            <div className="farm-cats">
+              <button
+                className={`cat-icon-btn ${cat === null ? "active" : ""}`}
+                onClick={() => setCat(null)}
+                title="Todas"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/cocina/cat/todas.png" alt="Todas" />
+              </button>
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.id}
+                  className={`cat-icon-btn ${cat === c.id ? "active" : ""}`}
+                  onClick={() => setCat(cat === c.id ? null : c.id)}
+                  title={c.id}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/cocina/cat/${CAT_ICON[c.id]}.png`} alt={c.id} />
+                </button>
               ))}
             </div>
-          )}
-        </div>
-      </main>
+          </div>
 
-      {/* Estantería decorativa + mascotas */}
-      <div className="cocina-foot">
+          {/* ---------- EL LIBRO ---------- */}
+          <div className="ob-frame">
+            <OpenBook
+              recipes={filtered}
+              selected={selected}
+              onSelect={(r) => setSelectedId(r.id)}
+              onToggleFav={toggleFav}
+              onSeeAll={() => {
+                setCat(null);
+                setQuery("");
+                setTab("recetas");
+              }}
+              onOpenOriginal={() => openOriginal(selected)}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="farm-empty">
+          <h2 className="book-section-title">
+            {tab === "colecciones" ? "📦 Colecciones" : "👥 Nosotros"}
+          </h2>
+          <p className="book-section-sub mt-2">Próximamente ❧</p>
+        </div>
+      )}
+
+      {/* ---------- Pie decorativo + números ---------- */}
+      <footer className="farm-foot">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="cocina-mascota" src="/cocina/mascota-saluda.png" alt="" />
+        <img src="/cocina/mascota-saluda.png" alt="" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="cocina-shelf" src="/cocina/shelf.png" alt="" />
+        <img className="shelf-img" src="/cocina/shelf.png" alt="" />
+        <div className="stats-panel">
+          <div>
+            <b>{stats.recetas}</b>
+            <span>Recetas</span>
+          </div>
+          <div>
+            <b>{stats.categorias}</b>
+            <span>Categorías</span>
+          </div>
+          <div>
+            <b>{stats.favoritas}</b>
+            <span>Favoritas</span>
+          </div>
+          <div>
+            <b>{Math.round(stats.minutos / 60)}h</b>
+            <span>De cocina</span>
+          </div>
+        </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="cocina-gallina" src="/cocina/gallina.png" alt="" />
-      </div>
+        <img src="/cocina/gallina.png" alt="" />
+      </footer>
 
       {isAdmin && (
-        <button className="book-fab" onClick={() => setSelected("new")}>
+        <button className="book-fab" onClick={() => setEditing("new")}>
           <span style={{ fontSize: "1.4rem" }}>👨‍🍳</span>
           Añadir
         </button>
@@ -193,24 +248,20 @@ export default function Home() {
       <AnimatePresence>
         {bookPage !== null && (
           <BookReader
-            key={`book-${bookPage}-${openAnim ? "anim" : "direct"}`}
+            key={`book-${bookPage}`}
             startPage={bookPage}
-            animateOpen={openAnim}
-            onClose={() => {
-              setBookPage(null);
-              setOpenAnim(false);
-            }}
+            onClose={() => setBookPage(null)}
           />
         )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {selected !== null && (
+        {editing !== null && (
           <RecipePanel
-            key={selected === "new" ? "new" : selected.id}
-            recipe={selected === "new" ? null : selected}
+            key={editing === "new" ? "new" : editing.id}
+            recipe={editing === "new" ? null : editing}
             isAdmin={isAdmin}
-            onClose={() => setSelected(null)}
+            onClose={() => setEditing(null)}
           />
         )}
       </AnimatePresence>
