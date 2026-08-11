@@ -2,7 +2,15 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BOOK_PAGES, BOOK_SECTIONS, pageSrc, recipeIdForPage } from "@/lib/book";
+import {
+  BOOK_PAGES,
+  BOOK_SECTIONS,
+  COVER_SRC,
+  COVER_SRC_HD,
+  pageSrc,
+  pageSrcHD,
+  recipeIdForPage,
+} from "@/lib/book";
 import { getRecipe } from "@/lib/storage";
 import type { Recipe } from "@/lib/types";
 
@@ -118,14 +126,26 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
         <div className="reader-spread" onClick={() => setZoom((z) => !z)}>
           {isCover ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img className="reader-page" src="/cocina/portada.jpg" alt="Portada del libro" />
+            <img
+              className="reader-page"
+              src={zoom ? COVER_SRC_HD : COVER_SRC}
+              alt="Portada del libro"
+            />
           ) : (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="reader-page" src={pageSrc(left)} alt={`Página ${left + 1}`} />
+              <img
+                className="reader-page"
+                src={zoom ? pageSrcHD(left) : pageSrc(left)}
+                alt={`Página ${left + 1}`}
+              />
               {isWide && right < BOOK_PAGES && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img className="reader-page" src={pageSrc(right)} alt={`Página ${right + 1}`} />
+                <img
+                  className="reader-page"
+                  src={zoom ? pageSrcHD(right) : pageSrc(right)}
+                  alt={`Página ${right + 1}`}
+                />
               )}
             </>
           )}

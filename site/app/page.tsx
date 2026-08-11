@@ -167,24 +167,22 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ---------- Abrir el libro ---------- */}
-          <div className="openbook-cta">
-            <button className="openbook-btn" onClick={() => setReaderPage(COVER)}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/cocina/portada.jpg" alt="" />
-              <span>📖 Abrir el libro</span>
-            </button>
-          </div>
-
           {/* ---------- Cuadrícula de recetas 1:1 ---------- */}
           <section className="grid-wrap">
-            <h2 className="grid-title">
-              ❧ {tab === "favoritas" ? "Tus favoritas" : (cat ?? "Nuestras recetas")} ❧
-            </h2>
-            <p className="grid-sub">
-              {filtered.length} receta{filtered.length === 1 ? "" : "s"} · toca una para abrirla en
-              el libro
-            </p>
+            <div className="grid-head">
+              <div className="grid-head-mid">
+                <h2 className="grid-title">
+                  ❧ {tab === "favoritas" ? "Tus favoritas" : (cat ?? "Nuestras recetas")} ❧
+                </h2>
+                <p className="grid-sub">
+                  {filtered.length} receta{filtered.length === 1 ? "" : "s"} · toca una para abrirla
+                  en el libro
+                </p>
+              </div>
+              <button className="openbook-btn" onClick={() => setReaderPage(COVER)}>
+                📖 Abrir el Libro
+              </button>
+            </div>
 
             {filtered.length === 0 ? (
               <p className="ob-empty">No hay recetas que coincidan.</p>

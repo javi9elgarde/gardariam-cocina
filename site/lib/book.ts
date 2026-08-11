@@ -6,6 +6,14 @@ export function pageSrc(i: number): string {
   return `/cocina/libro/${String(i).padStart(2, "0")}.jpg`;
 }
 
+/** Versión de alta resolución (1791×2494), se carga solo al ampliar */
+export function pageSrcHD(i: number): string {
+  return `/cocina/libro-hd/${String(i).padStart(2, "0")}.jpg`;
+}
+
+export const COVER_SRC = "/cocina/portada.jpg";
+export const COVER_SRC_HD = "/cocina/libro-hd/portada.jpg";
+
 export interface BookSection {
   id: string;
   label: string;

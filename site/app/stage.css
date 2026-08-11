@@ -1,18 +1,30 @@
-/* ===== Botón "Abrir el libro" con la portada ===== */
-.openbook-cta {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  padding: 0.2rem 1rem 1rem;
+/* ===== Cabecera de la cuadrícula + botón "Abrir el Libro" ===== */
+.grid-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+.grid-head-mid {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  text-align: center;
 }
 .openbook-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  padding: 0.6rem 1.4rem 0.6rem 0.6rem;
-  border-radius: 14px;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  z-index: 2;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
   cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font-display), serif;
+  font-size: clamp(0.74rem, 1.3vw, 0.9rem);
+  letter-spacing: 0.05em;
+  color: #f7e6bd;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   background:
     repeating-linear-gradient(
       92deg,
@@ -20,33 +32,18 @@
       rgba(90, 58, 28, 0.1) 8px 16px
     ),
     linear-gradient(160deg, #a9762f 0%, #7a5228 100%);
-  border: 3px solid #3f2a11;
-  box-shadow: 0 10px 24px rgba(20, 14, 4, 0.45);
+  border: 2.5px solid #3f2a11;
+  box-shadow: 0 5px 14px rgba(20, 14, 4, 0.4);
   transition:
     transform 0.16s var(--ease-book),
     filter 0.16s var(--ease-book);
 }
 .openbook-btn:hover {
-  transform: translateY(-3px);
-  filter: brightness(1.06);
+  transform: translateY(-2px);
+  filter: brightness(1.08);
 }
 .openbook-btn:active {
-  transform: scale(0.98);
-}
-.openbook-btn img {
-  width: clamp(52px, 7vw, 74px);
-  height: auto;
-  border-radius: 3px 6px 6px 3px;
-  box-shadow:
-    0 4px 10px rgba(0, 0, 0, 0.5),
-    2px 0 0 rgba(60, 38, 14, 0.6);
-}
-.openbook-btn span {
-  font-family: var(--font-display), serif;
-  font-size: clamp(0.85rem, 1.6vw, 1.05rem);
-  letter-spacing: 0.06em;
-  color: #f7e6bd;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  transform: scale(0.97);
 }
 
 /* ===== Cuadrícula de recetas (1:1) ===== */
@@ -75,7 +72,7 @@
   font-size: 0.78rem;
   font-style: italic;
   color: var(--ink-faint);
-  margin: 0.25rem 0 1.1rem;
+  margin: 0.25rem 0 0;
 }
 .rgrid {
   display: grid;
@@ -183,5 +180,22 @@
   .rgrid {
     grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
     gap: 0.7rem;
+  }
+  /* en móvil el botón va debajo del título, centrado */
+  .grid-head {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0.7rem;
+  }
+  .grid-head-mid,
+  .openbook-btn {
+    grid-column: 1;
+  }
+  .grid-head-mid {
+    grid-row: 1;
+  }
+  .openbook-btn {
+    grid-row: 2;
+    justify-self: center;
   }
 }
