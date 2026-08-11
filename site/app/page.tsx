@@ -2,8 +2,10 @@
 
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import BookReader from "@/components/BookReader";
 import RecipeCard from "@/components/RecipeCard";
 import RecipePanel from "@/components/RecipePanel";
+import { RECIPE_PAGE } from "@/lib/book";
 import { useAuth } from "@/lib/auth";
 import { getRecipes, onStorageChange } from "@/lib/storage";
 import { CATEGORIES, type Recipe } from "@/lib/types";
@@ -36,6 +38,7 @@ export default function Home() {
   const [selected, setSelected] = useState<Recipe | null | "new">(null);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  const [bookPage, setBookPage] = useState<number | null>(null);
 
   useEffect(() => {
     setRecipes(getRecipes());
@@ -129,6 +132,9 @@ export default function Home() {
           <p className="book-section-sub mt-1">
             Cada receta cuenta una historia, cada bocado un recuerdo ♥
           </p>
+          <button className="book-btn mt-4" onClick={() => setBookPage(0)}>
+            📖 Abrir el libro
+          </button>
         </div>
 
         {/* Rejilla */}
@@ -143,7 +149,15 @@ export default function Home() {
               style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}
             >
               {filtered.map((r) => (
-                <RecipeCard key={r.id} recipe={r} onClick={() => setSelected(r)} />
+                <RecipeCard
+                  key={r.id}
+                  recipe={r}
+                  onClick={() => {
+                    const p = RECIPE_PAGE[r.id];
+                    if (p !== undefined) setBookPage(p);
+                    else setSelected(r);
+                  }}
+                />
               ))}
             </div>
           )}
@@ -166,6 +180,12 @@ export default function Home() {
           Añadir
         </button>
       )}
+
+      <AnimatePresence>
+        {bookPage !== null && (
+          <BookReader startPage={bookPage} onClose={() => setBookPage(null)} />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {selected !== null && (
