@@ -2,8 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import InlineBook from "@/components/book/InlineBook";
-import BookReader from "@/components/BookReader";
+import BookReader, { COVER } from "@/components/BookReader";
 import RecipePanel from "@/components/RecipePanel";
 import { RECIPE_PAGE } from "@/lib/book";
 import { useAuth } from "@/lib/auth";
@@ -42,11 +41,6 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("recetas");
-
-  // libro dentro del marco
-  const [opened, setOpened] = useState(false);
-  const [page, setPage] = useState(0);
-  // lector grande (solo al pulsar una hoja)
   const [readerPage, setReaderPage] = useState<number | null>(null);
 
   useEffect(() => {
@@ -80,16 +74,12 @@ export default function Home() {
     [recipes],
   );
 
-  /** Al pulsar una receta: el libro salta a su página (sin salir del marco) */
-  function jumpToRecipe(r: Recipe) {
-    const p = RECIPE_PAGE[r.id];
-    if (p === undefined) return;
-    setOpened(true);
-    setPage(p % 2 === 0 ? p : p - 1);
-    document.querySelector(".stage-frame")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  /** Al pulsar una receta se abre el libro en su página */
+  function openRecipe(r: Recipe) {
+    setReaderPage(RECIPE_PAGE[r.id] ?? COVER);
   }
 
-  const showBook = tab === "recetas" || tab === "favoritas";
+  const showRecipes = tab === "recetas" || tab === "favoritas";
 
   return (
     <div className="farm">
@@ -141,90 +131,81 @@ export default function Home() {
         />
       </header>
 
-      {showBook ? (
+      {showRecipes ? (
         <>
-          {/* ---------- EL LIBRO dentro del marco ---------- */}
-          <div className="stage-frame">
-            <InlineBook
-              page={page}
-              opened={opened}
-              onOpen={() => {
-                setOpened(true);
-                setPage(0);
-              }}
-              onChangePage={setPage}
-              onZoomPage={(p) => setReaderPage(p)}
-            />
-          </div>
+          {/* ---------- Buscador + filtros ---------- */}
+          <div className="farm-tools">
+            <label className="book-search">
+              <span aria-hidden>🔍</span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar receta..."
+              />
+            </label>
 
-          {/* ---------- Filtros + recomendaciones ---------- */}
-          <section className="picker">
-            <div className="picker-tools">
-              <label className="book-search">
-                <span aria-hidden>🔍</span>
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar receta..."
-                />
-              </label>
-
-              <div className="farm-cats">
+            <div className="farm-cats">
+              <button
+                className={`cat-icon-btn ${cat === null ? "active" : ""}`}
+                onClick={() => setCat(null)}
+                title="Todas"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/cocina/cat/todas.png" alt="Todas" />
+              </button>
+              {CATEGORIES.map((c) => (
                 <button
-                  className={`cat-icon-btn ${cat === null ? "active" : ""}`}
-                  onClick={() => setCat(null)}
-                  title="Todas"
+                  key={c.id}
+                  className={`cat-icon-btn ${cat === c.id ? "active" : ""}`}
+                  onClick={() => setCat(cat === c.id ? null : c.id)}
+                  title={c.id}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/cocina/cat/todas.png" alt="Todas" />
+                  <img src={`/cocina/cat/${CAT_ICON[c.id]}.png`} alt={c.id} />
                 </button>
-                {CATEGORIES.map((c) => (
-                  <button
-                    key={c.id}
-                    className={`cat-icon-btn ${cat === c.id ? "active" : ""}`}
-                    onClick={() => setCat(cat === c.id ? null : c.id)}
-                    title={c.id}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/cocina/cat/${CAT_ICON[c.id]}.png`} alt={c.id} />
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* Columna de recomendaciones del filtro */}
-            <div className="reco">
-              <h3 className="reco-h">
-                ❧ {tab === "favoritas" ? "Tus favoritas" : (cat ?? "Todas las recetas")} ❧
-              </h3>
-              <p className="reco-sub">
-                {filtered.length} receta{filtered.length === 1 ? "" : "s"} · toca una para abrir su
-                página
-              </p>
-              <ul className="reco-list">
+          {/* ---------- Abrir el libro ---------- */}
+          <div className="openbook-cta">
+            <button className="openbook-btn" onClick={() => setReaderPage(COVER)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/cocina/portada.jpg" alt="" />
+              <span>📖 Abrir el libro</span>
+            </button>
+          </div>
+
+          {/* ---------- Cuadrícula de recetas 1:1 ---------- */}
+          <section className="grid-wrap">
+            <h2 className="grid-title">
+              ❧ {tab === "favoritas" ? "Tus favoritas" : (cat ?? "Nuestras recetas")} ❧
+            </h2>
+            <p className="grid-sub">
+              {filtered.length} receta{filtered.length === 1 ? "" : "s"} · toca una para abrirla en
+              el libro
+            </p>
+
+            {filtered.length === 0 ? (
+              <p className="ob-empty">No hay recetas que coincidan.</p>
+            ) : (
+              <ul className="rgrid">
                 {filtered.map((r) => (
                   <li key={r.id}>
-                    <button className="reco-item" onClick={() => jumpToRecipe(r)}>
-                      {r.photoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img className="reco-thumb" src={r.photoUrl} alt="" />
-                      ) : (
-                        <span className="reco-thumb reco-thumb--empty" />
-                      )}
-                      <span className="reco-body">
-                        <span className="reco-name">{r.title}</span>
-                        <span className="reco-meta">
-                          <span className="ob-stars">
-                            {"★".repeat(Math.max(1, Math.min(5, r.rating || 5)))}
-                          </span>{" "}
-                          · {r.prepMinutes} min
-                        </span>
+                    <button className="rtile" onClick={() => openRecipe(r)}>
+                      <span className="rtile-img">
+                        {r.photoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={r.photoUrl} alt={r.title} />
+                        ) : (
+                          <span className="rtile-empty">🍲</span>
+                        )}
                       </span>
                       <span
                         role="button"
                         tabIndex={0}
                         aria-label="Favorita"
-                        className={`ob-fav ${r.favorite ? "is-fav" : ""}`}
+                        className={`rtile-fav ${r.favorite ? "is-fav" : ""}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleFavorite(r.id);
@@ -238,14 +219,20 @@ export default function Home() {
                       >
                         {r.favorite ? "♥" : "♡"}
                       </span>
+                      <span className="rtile-cap">
+                        <span className="rtile-name">{r.title}</span>
+                        <span className="rtile-meta">
+                          <span className="ob-stars">
+                            {"★".repeat(Math.max(1, Math.min(5, r.rating || 5)))}
+                          </span>{" "}
+                          · {r.prepMinutes} min
+                        </span>
+                      </span>
                     </button>
                   </li>
                 ))}
-                {filtered.length === 0 && (
-                  <li className="ob-empty">No hay recetas que coincidan.</li>
-                )}
               </ul>
-            </div>
+            )}
           </section>
         </>
       ) : (
@@ -257,7 +244,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ---------- Pie decorativo + números ---------- */}
+      {/* ---------- Pie ---------- */}
       <footer className="farm-foot">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/cocina/mascota-saluda.png" alt="" />

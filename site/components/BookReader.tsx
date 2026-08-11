@@ -6,23 +6,18 @@ import { BOOK_PAGES, BOOK_SECTIONS, pageSrc, recipeIdForPage } from "@/lib/book"
 import { getRecipe } from "@/lib/storage";
 import type { Recipe } from "@/lib/types";
 
+/** -1 = portada del libro */
+export const COVER = -1;
+
 interface BookReaderProps {
   startPage?: number;
-  /** true = empieza con la portada cerrada y la abre con animación */
-  animateOpen?: boolean;
   onClose: () => void;
 }
 
-export default function BookReader({
-  startPage = 0,
-  animateOpen = false,
-  onClose,
-}: BookReaderProps) {
+export default function BookReader({ startPage = COVER, onClose }: BookReaderProps) {
   const [page, setPage] = useState(startPage);
-  const [dir, setDir] = useState(1);
   const [zoom, setZoom] = useState(false);
   const [isWide, setIsWide] = useState(true);
-  const [opening, setOpening] = useState(animateOpen);
   const [ficha, setFicha] = useState(false);
   const touchX = useRef<number | null>(null);
 
@@ -34,27 +29,22 @@ export default function BookReader({
     return () => mq.removeEventListener("change", upd);
   }, []);
 
-  // Secuencia de apertura: portada cerrada -> se abre -> páginas
-  useEffect(() => {
-    if (!opening) return;
-    const t = setTimeout(() => setOpening(false), 1150);
-    return () => clearTimeout(t);
-  }, [opening]);
-
-  const step = isWide ? 2 : 1;
-  const left = isWide ? (page % 2 === 0 ? page : page - 1) : page;
+  const isCover = page === COVER;
+  const left = isCover ? COVER : page % 2 === 0 ? page : page - 1;
   const right = left + 1;
 
   const go = useCallback(
     (d: number) => {
-      setDir(d);
       setFicha(false);
       setPage((p) => {
-        const base = isWide ? (p % 2 === 0 ? p : p - 1) : p;
-        return Math.max(0, Math.min(BOOK_PAGES - 1, base + d * step));
+        if (p === COVER) return d > 0 ? 0 : COVER; // desde la portada solo se avanza
+        const base = p % 2 === 0 ? p : p - 1;
+        const next = base + d * (isWide ? 2 : 1);
+        if (next < 0) return COVER; // volver a la portada
+        return Math.min(BOOK_PAGES - 1, next);
       });
     },
-    [isWide, step],
+    [isWide],
   );
 
   useEffect(() => {
@@ -67,11 +57,13 @@ export default function BookReader({
     return () => window.removeEventListener("keydown", onKey);
   }, [go, onClose, zoom]);
 
-  const atStart = left <= 0;
-  const atEnd = (isWide ? right : left) >= BOOK_PAGES - 1;
-  const sectionLabel = [...BOOK_SECTIONS].reverse().find((s) => s.page <= left)?.label ?? "";
+  const atStart = isCover;
+  const atEnd = !isCover && (isWide ? right : left) >= BOOK_PAGES - 1;
+  const sectionLabel = isCover
+    ? "Portada"
+    : ([...BOOK_SECTIONS].reverse().find((s) => s.page <= left)?.label ?? "");
 
-  const recipeId = recipeIdForPage(left, right);
+  const recipeId = isCover ? null : recipeIdForPage(left, right);
   const recipe: Recipe | undefined = recipeId ? getRecipe(recipeId) : undefined;
 
   return (
@@ -87,6 +79,11 @@ export default function BookReader({
         </button>
         <span className="reader-title">📖 Mariam y Javi — Libro de Cocina</span>
         <div className="reader-bar-right">
+          {!isCover && (
+            <button className="book-top-link" onClick={() => setPage(COVER)}>
+              Portada
+            </button>
+          )}
           {recipe && (
             <button className="book-top-link" onClick={() => setFicha((f) => !f)}>
               {ficha ? "Ocultar ficha" : "📋 Ficha"}
@@ -108,72 +105,42 @@ export default function BookReader({
           touchX.current = null;
         }}
       >
-        {opening ? (
-          /* ===== Animación de apertura ===== */
-          <div className="opening-scene">
-            <motion.img
-              className="opening-cover"
-              src="/cocina/portada.jpg"
-              alt="Portada"
-              initial={{ rotateY: 0, opacity: 1 }}
-              animate={{ rotateY: -168, opacity: 0.15 }}
-              transition={{ duration: 1.05, ease: [0.5, 0, 0.3, 1] }}
-            />
-            <motion.div
-              className="opening-inner"
-              initial={{ opacity: 0, scale: 0.94 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            >
+        <button
+          className="reader-arrow left"
+          onClick={() => go(-1)}
+          disabled={atStart}
+          aria-label="Anterior"
+        >
+          ‹
+        </button>
+
+        {/* Sin animación de pasar hoja: se muestra directamente */}
+        <div className="reader-spread" onClick={() => setZoom((z) => !z)}>
+          {isCover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="reader-page" src="/cocina/portada.jpg" alt="Portada del libro" />
+          ) : (
+            <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="reader-page" src={pageSrc(0)} alt="" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="reader-page" src={pageSrc(1)} alt="" />
-            </motion.div>
-          </div>
-        ) : (
-          <>
-            <button
-              className="reader-arrow left"
-              onClick={() => go(-1)}
-              disabled={atStart}
-              aria-label="Página anterior"
-            >
-              ‹
-            </button>
+              <img className="reader-page" src={pageSrc(left)} alt={`Página ${left + 1}`} />
+              {isWide && right < BOOK_PAGES && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="reader-page" src={pageSrc(right)} alt={`Página ${right + 1}`} />
+              )}
+            </>
+          )}
+        </div>
 
-            <AnimatePresence mode="wait" custom={dir}>
-              <motion.div
-                key={left}
-                custom={dir}
-                initial={{ rotateY: dir > 0 ? 32 : -32, opacity: 0 }}
-                animate={{ rotateY: 0, opacity: 1 }}
-                exit={{ rotateY: dir > 0 ? -32 : 32, opacity: 0 }}
-                transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-                className="reader-spread"
-                onClick={() => setZoom((z) => !z)}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="reader-page" src={pageSrc(left)} alt={`Página ${left + 1}`} />
-                {isWide && right < BOOK_PAGES && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img className="reader-page" src={pageSrc(right)} alt={`Página ${right + 1}`} />
-                )}
-              </motion.div>
-            </AnimatePresence>
+        <button
+          className="reader-arrow right"
+          onClick={() => go(1)}
+          disabled={atEnd}
+          aria-label="Siguiente"
+        >
+          ›
+        </button>
 
-            <button
-              className="reader-arrow right"
-              onClick={() => go(1)}
-              disabled={atEnd}
-              aria-label="Página siguiente"
-            >
-              ›
-            </button>
-          </>
-        )}
-
-        {/* ===== Ficha resumen ===== */}
+        {/* Ficha resumen */}
         <AnimatePresence>
           {ficha && recipe && (
             <motion.aside
@@ -219,17 +186,28 @@ export default function BookReader({
 
       <div className="reader-foot">
         <p className="reader-pageinfo">
-          Pág. <b>{left + 1}</b>
-          {isWide && right < BOOK_PAGES ? ` – ${right + 1}` : ""} de {BOOK_PAGES}
-          {sectionLabel ? ` — ${sectionLabel}` : ""}
+          {isCover ? (
+            "Portada"
+          ) : (
+            <>
+              Pág. <b>{left + 1}</b>
+              {isWide && right < BOOK_PAGES ? ` – ${right + 1}` : ""} de {BOOK_PAGES}
+              {sectionLabel ? ` — ${sectionLabel}` : ""}
+            </>
+          )}
         </p>
         <div className="reader-sections">
-          {BOOK_SECTIONS.map((s) => (
+          <button
+            className={`reader-sec ${isCover ? "active" : ""}`}
+            onClick={() => setPage(COVER)}
+          >
+            📕 Portada
+          </button>
+          {BOOK_SECTIONS.filter((s) => s.id !== "portada").map((s) => (
             <button
               key={s.id}
-              className={`reader-sec ${left >= s.page && left < s.page + 2 ? "active" : ""}`}
+              className={`reader-sec ${!isCover && left >= s.page && left < s.page + 2 ? "active" : ""}`}
               onClick={() => {
-                setDir(s.page > left ? 1 : -1);
                 setFicha(false);
                 setPage(s.page);
               }}
