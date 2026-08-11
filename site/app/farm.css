@@ -106,9 +106,9 @@
 }
 .farm-sign-img {
   display: block;
-  width: clamp(300px, 52vw, 620px);
+  width: clamp(210px, 30vw, 380px);
   height: auto;
-  filter: drop-shadow(0 12px 20px rgba(30, 25, 10, 0.45));
+  filter: drop-shadow(0 10px 16px rgba(30, 25, 10, 0.45));
 }
 
 /* ---- Buscador + categorías ---- */

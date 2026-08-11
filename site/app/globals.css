@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./farm.css";
+@import "./stage.css";
 
 :root {
   /* Paleta libro de cocina */

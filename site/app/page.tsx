@@ -2,7 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import OpenBook from "@/components/book/OpenBook";
+import InlineBook from "@/components/book/InlineBook";
 import BookReader from "@/components/BookReader";
 import RecipePanel from "@/components/RecipePanel";
 import { RECIPE_PAGE } from "@/lib/book";
@@ -36,13 +36,18 @@ function norm(s: string) {
 export default function Home() {
   const { isAdmin, user, loading, signIn, signOutUser } = useAuth();
   const { isFav, toggle: toggleFavorite } = useFavorites();
+
   const [rawRecipes, setRawRecipes] = useState<Recipe[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Recipe | null | "new">(null);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("recetas");
-  const [bookPage, setBookPage] = useState<number | null>(null);
+
+  // libro dentro del marco
+  const [opened, setOpened] = useState(false);
+  const [page, setPage] = useState(0);
+  // lector grande (solo al pulsar una hoja)
+  const [readerPage, setReaderPage] = useState<number | null>(null);
 
   useEffect(() => {
     const load = () => setRawRecipes(getRecipes());
@@ -50,23 +55,10 @@ export default function Home() {
     return onStorageChange(load);
   }, []);
 
-  // favorito viene del dispositivo, no de Firestore
   const recipes = useMemo(
     () => rawRecipes.map((r) => ({ ...r, favorite: isFav(r.id) })),
     [rawRecipes, isFav],
   );
-
-  const selected = useMemo(
-    () => recipes.find((r) => r.id === selectedId) ?? null,
-    [recipes, selectedId],
-  );
-
-  // primera receta seleccionada por defecto
-  useEffect(() => {
-    if (!selectedId && recipes.length) {
-      setSelectedId((recipes.find((r) => r.pages?.length) ?? recipes[0]).id);
-    }
-  }, [recipes, selectedId]);
 
   const filtered = useMemo(() => {
     const q = norm(query.trim());
@@ -88,23 +80,23 @@ export default function Home() {
     [recipes],
   );
 
-  function toggleFav(r: Recipe) {
-    toggleFavorite(r.id);
+  /** Al pulsar una receta: el libro salta a su página (sin salir del marco) */
+  function jumpToRecipe(r: Recipe) {
+    const p = RECIPE_PAGE[r.id];
+    if (p === undefined) return;
+    setOpened(true);
+    setPage(p % 2 === 0 ? p : p - 1);
+    document.querySelector(".stage-frame")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  function openOriginal(r: Recipe | null) {
-    const p = r ? RECIPE_PAGE[r.id] : undefined;
-    setBookPage(p ?? 0);
-  }
+  const showBook = tab === "recetas" || tab === "favoritas";
 
   return (
     <div className="farm">
       {/* ---------- Navegación ---------- */}
       <nav className="farm-nav">
         <a className="farm-brand" href="https://gardariam.com">
-          🏠 Cocina
-          <br />
-          Gardariam
+          🏠 Hub
         </a>
         <div className="farm-links">
           {(
@@ -149,57 +141,112 @@ export default function Home() {
         />
       </header>
 
-      {tab === "recetas" || tab === "favoritas" ? (
+      {showBook ? (
         <>
-          {/* ---------- Buscador + categorías ---------- */}
-          <div className="farm-tools">
-            <label className="book-search">
-              <span aria-hidden>🔍</span>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar receta..."
-              />
-            </label>
-
-            <div className="farm-cats">
-              <button
-                className={`cat-icon-btn ${cat === null ? "active" : ""}`}
-                onClick={() => setCat(null)}
-                title="Todas"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/cocina/cat/todas.png" alt="Todas" />
-              </button>
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c.id}
-                  className={`cat-icon-btn ${cat === c.id ? "active" : ""}`}
-                  onClick={() => setCat(cat === c.id ? null : c.id)}
-                  title={c.id}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/cocina/cat/${CAT_ICON[c.id]}.png`} alt={c.id} />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ---------- EL LIBRO ---------- */}
-          <div className="ob-frame">
-            <OpenBook
-              recipes={filtered}
-              selected={selected}
-              onSelect={(r) => setSelectedId(r.id)}
-              onToggleFav={toggleFav}
-              onSeeAll={() => {
-                setCat(null);
-                setQuery("");
-                setTab("recetas");
+          {/* ---------- EL LIBRO dentro del marco ---------- */}
+          <div className="stage-frame">
+            <InlineBook
+              page={page}
+              opened={opened}
+              onOpen={() => {
+                setOpened(true);
+                setPage(0);
               }}
-              onOpenOriginal={() => openOriginal(selected)}
+              onChangePage={setPage}
+              onZoomPage={(p) => setReaderPage(p)}
             />
           </div>
+
+          {/* ---------- Filtros + recomendaciones ---------- */}
+          <section className="picker">
+            <div className="picker-tools">
+              <label className="book-search">
+                <span aria-hidden>🔍</span>
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar receta..."
+                />
+              </label>
+
+              <div className="farm-cats">
+                <button
+                  className={`cat-icon-btn ${cat === null ? "active" : ""}`}
+                  onClick={() => setCat(null)}
+                  title="Todas"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/cocina/cat/todas.png" alt="Todas" />
+                </button>
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c.id}
+                    className={`cat-icon-btn ${cat === c.id ? "active" : ""}`}
+                    onClick={() => setCat(cat === c.id ? null : c.id)}
+                    title={c.id}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/cocina/cat/${CAT_ICON[c.id]}.png`} alt={c.id} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Columna de recomendaciones del filtro */}
+            <div className="reco">
+              <h3 className="reco-h">
+                ❧ {tab === "favoritas" ? "Tus favoritas" : (cat ?? "Todas las recetas")} ❧
+              </h3>
+              <p className="reco-sub">
+                {filtered.length} receta{filtered.length === 1 ? "" : "s"} · toca una para abrir su
+                página
+              </p>
+              <ul className="reco-list">
+                {filtered.map((r) => (
+                  <li key={r.id}>
+                    <button className="reco-item" onClick={() => jumpToRecipe(r)}>
+                      {r.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img className="reco-thumb" src={r.photoUrl} alt="" />
+                      ) : (
+                        <span className="reco-thumb reco-thumb--empty" />
+                      )}
+                      <span className="reco-body">
+                        <span className="reco-name">{r.title}</span>
+                        <span className="reco-meta">
+                          <span className="ob-stars">
+                            {"★".repeat(Math.max(1, Math.min(5, r.rating || 5)))}
+                          </span>{" "}
+                          · {r.prepMinutes} min
+                        </span>
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Favorita"
+                        className={`ob-fav ${r.favorite ? "is-fav" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(r.id);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.stopPropagation();
+                            toggleFavorite(r.id);
+                          }
+                        }}
+                      >
+                        {r.favorite ? "♥" : "♡"}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+                {filtered.length === 0 && (
+                  <li className="ob-empty">No hay recetas que coincidan.</li>
+                )}
+              </ul>
+            </div>
+          </section>
         </>
       ) : (
         <div className="farm-empty">
@@ -246,11 +293,11 @@ export default function Home() {
       )}
 
       <AnimatePresence>
-        {bookPage !== null && (
+        {readerPage !== null && (
           <BookReader
-            key={`book-${bookPage}`}
-            startPage={bookPage}
-            onClose={() => setBookPage(null)}
+            key={`reader-${readerPage}`}
+            startPage={readerPage}
+            onClose={() => setReaderPage(null)}
           />
         )}
       </AnimatePresence>
