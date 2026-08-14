@@ -3,12 +3,12 @@
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import BookReader, { COVER } from "@/components/BookReader";
+import NewRecipeView from "@/components/NewRecipeView";
 import RecipePanel from "@/components/RecipePanel";
-import { RECIPE_PAGE } from "@/lib/book";
 import { useAuth } from "@/lib/auth";
 import { getRecipes, onStorageChange } from "@/lib/storage";
 import { useFavorites } from "@/lib/useFavorites";
-import { CATEGORIES, type Recipe } from "@/lib/types";
+import { CATEGORIES, isBookRecipe, type Recipe } from "@/lib/types";
 
 type Tab = "recetas" | "favoritas" | "colecciones" | "nosotros";
 
@@ -42,6 +42,7 @@ export default function Home() {
   const [cat, setCat] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("recetas");
   const [readerPage, setReaderPage] = useState<number | null>(null);
+  const [viewing, setViewing] = useState<Recipe | null>(null);
 
   useEffect(() => {
     const load = () => setRawRecipes(getRecipes());
@@ -74,9 +75,10 @@ export default function Home() {
     [recipes],
   );
 
-  /** Al pulsar una receta se abre el libro en su página */
+  /** Del libro -> abre el libro en su página. Nueva -> ficha propia. */
   function openRecipe(r: Recipe) {
-    setReaderPage(RECIPE_PAGE[r.id] ?? COVER);
+    if (isBookRecipe(r)) setReaderPage(r.bookPage ?? COVER);
+    else setViewing(r);
   }
 
   const showRecipes = tab === "recetas" || tab === "favoritas";
@@ -190,15 +192,41 @@ export default function Home() {
               <ul className="rgrid">
                 {filtered.map((r) => (
                   <li key={r.id}>
-                    <button className="rtile" onClick={() => openRecipe(r)}>
+                    <button
+                      className={`rtile ${isBookRecipe(r) ? "is-book" : "is-new"}`}
+                      onClick={() => openRecipe(r)}
+                    >
                       <span className="rtile-img">
-                        {r.photoUrl ? (
+                        {r.iconUrl || r.photoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={r.photoUrl} alt={r.title} />
+                          <img src={r.iconUrl || r.photoUrl} alt={r.title} />
                         ) : (
                           <span className="rtile-empty">🍲</span>
                         )}
+                        <span className="rtile-badge" title={isBookRecipe(r) ? "En el libro" : "Receta de casa"}>
+                          {isBookRecipe(r) ? "📖" : "✎"}
+                        </span>
                       </span>
+                      {isAdmin && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Editar receta"
+                          className="rtile-edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditing(r);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.stopPropagation();
+                              setEditing(r);
+                            }
+                          }}
+                        >
+                          ✎
+                        </span>
+                      )}
                       <span
                         role="button"
                         tabIndex={0}
@@ -283,6 +311,21 @@ export default function Home() {
             key={`reader-${readerPage}`}
             startPage={readerPage}
             onClose={() => setReaderPage(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {viewing && (
+          <NewRecipeView
+            key={`view-${viewing.id}`}
+            recipe={viewing}
+            isAdmin={isAdmin}
+            onEdit={() => {
+              setEditing(viewing);
+              setViewing(null);
+            }}
+            onClose={() => setViewing(null)}
           />
         )}
       </AnimatePresence>

@@ -11,6 +11,7 @@ import {
   pageSrcHD,
   recipeIdForPage,
 } from "@/lib/book";
+import IngredientsPanel from "@/components/IngredientsPanel";
 import { getRecipe } from "@/lib/storage";
 import type { Recipe } from "@/lib/types";
 
@@ -27,6 +28,7 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
   const [zoom, setZoom] = useState(false);
   const [isWide, setIsWide] = useState(true);
   const [ficha, setFicha] = useState(false);
+  const [ings, setIngs] = useState(false);
   const touchX = useRef<number | null>(null);
 
   useEffect(() => {
@@ -90,6 +92,11 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
           {!isCover && (
             <button className="book-top-link" onClick={() => setPage(COVER)}>
               Portada
+            </button>
+          )}
+          {recipe && (
+            <button className="book-top-link" onClick={() => setIngs((v) => !v)}>
+              🧺 Ingredientes
             </button>
           )}
           {recipe && (
@@ -159,6 +166,13 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
         >
           ›
         </button>
+
+        {/* Ingredientes marcables */}
+        <AnimatePresence>
+          {ings && recipe && (
+            <IngredientsPanel recipe={recipe} onClose={() => setIngs(false)} />
+          )}
+        </AnimatePresence>
 
         {/* Ficha resumen */}
         <AnimatePresence>

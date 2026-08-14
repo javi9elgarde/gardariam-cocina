@@ -1,8 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import ListBuilder from "@/components/ListBuilder";
+import { BOOK_PAGES } from "@/lib/book";
 import { addRecipe, deleteRecipe, updateRecipe } from "@/lib/storage";
 import { CATEGORIES, EMPTY_RECIPE, type Recipe } from "@/lib/types";
 
@@ -13,65 +14,44 @@ interface RecipePanelProps {
 }
 
 export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelProps) {
-  const [mode, setMode] = useState<"view" | "edit">(recipe ? "view" : "edit");
-  const [page, setPage] = useState(0);
-  const [dir, setDir] = useState(1);
-  const [fav, setFav] = useState(recipe?.favorite ?? false);
   const [draft, setDraft] = useState<Omit<Recipe, "id">>(
     recipe
       ? {
           title: recipe.title,
           photoUrl: recipe.photoUrl,
+          iconUrl: recipe.iconUrl ?? "",
           pages: recipe.pages ?? [],
+          bookPage: recipe.bookPage,
           category: recipe.category,
           rating: recipe.rating,
           prepMinutes: recipe.prepMinutes,
           persons: recipe.persons ?? 2,
           favorite: recipe.favorite ?? false,
+          description: recipe.description ?? "",
+          ingredients2: recipe.ingredients2 ?? [],
+          steps2: recipe.steps2 ?? [],
         }
       : EMPTY_RECIPE,
   );
 
-  const pages = recipe?.pages ?? [];
+  const inBook = draft.bookPage !== undefined;
+
+  function set<K extends keyof Omit<Recipe, "id">>(k: K, v: Omit<Recipe, "id">[K]) {
+    setDraft((d) => ({ ...d, [k]: v }));
+  }
 
   function save() {
     if (recipe) updateRecipe(recipe.id, draft);
     else addRecipe(draft);
     onClose();
   }
+
   function remove() {
     if (recipe) deleteRecipe(recipe.id);
     onClose();
   }
-  function toggleFav() {
-    if (!recipe) return;
-    const v = !fav;
-    setFav(v);
-    updateRecipe(recipe.id, { favorite: v });
-  }
-  function share() {
-    const url = pages[page] || recipe?.photoUrl || "";
-    if (navigator.share) navigator.share({ title: recipe?.title, url }).catch(() => {});
-    else if (url) window.open(url, "_blank");
-  }
-  function print() {
-    const url = pages[page];
-    if (!url) return;
-    const w = window.open("", "_blank");
-    if (w) {
-      w.document.write(
-        `<img src="${url}" style="max-width:100%" onload="window.print()"/>`,
-      );
-      w.document.close();
-    }
-  }
-  function go(d: number) {
-    setDir(d);
-    setPage((p) => Math.max(0, Math.min(pages.length - 1, p + d)));
-  }
 
-  const showForm = mode === "edit" && isAdmin;
-  const inputCls = "book-input";
+  if (!isAdmin) return null;
 
   return (
     <motion.div
@@ -82,10 +62,10 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.92, rotateY: -12, opacity: 0 }}
-        animate={{ scale: 1, rotateY: 0, opacity: 1 }}
-        exit={{ scale: 0.92, opacity: 0 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         className="recipe-book"
         onClick={(e) => e.stopPropagation()}
       >
@@ -93,192 +73,169 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
           ✕
         </button>
 
-        {showForm ? (
-          <div className="recipe-form">
-            <h3 className="book-section-title" style={{ fontSize: "1.3rem" }}>
-              {recipe ? "Editar receta" : "Nueva receta"}
-            </h3>
-            <label className="book-label">Título</label>
-            <input
-              className={inputCls}
-              value={draft.title}
-              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-            />
-            <label className="book-label">Imagen de la tarjeta (URL)</label>
-            <input
-              className={inputCls}
-              value={draft.photoUrl}
-              placeholder="https://imagen.com/plato.jpg"
-              onChange={(e) => setDraft({ ...draft, photoUrl: e.target.value })}
-            />
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="book-label">Categoría</label>
-                <select
-                  className={inputCls}
-                  value={draft.category}
-                  onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-                >
-                  <option value="">—</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.id}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="book-label">Minutos</label>
-                <input
-                  className={inputCls}
-                  type="number"
-                  min={0}
-                  value={draft.prepMinutes}
-                  onChange={(e) => setDraft({ ...draft, prepMinutes: Number(e.target.value) })}
-                />
-              </div>
-              <div>
-                <label className="book-label">Personas</label>
-                <input
-                  className={inputCls}
-                  type="number"
-                  min={1}
-                  value={draft.persons}
-                  onChange={(e) => setDraft({ ...draft, persons: Number(e.target.value) })}
-                />
-              </div>
-            </div>
-            <label className="book-label">Valoración</label>
-            <div className="mb-2 flex gap-1">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setDraft({ ...draft, rating: n })}
-                  style={{
-                    fontSize: "1.5rem",
-                    lineHeight: 1,
-                    color: n <= draft.rating ? "var(--oliva)" : "#c9b98f",
-                  }}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-            <label className="book-label" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <input
-                type="checkbox"
-                checked={draft.favorite}
-                onChange={(e) => setDraft({ ...draft, favorite: e.target.checked })}
-              />
-              Marcar como favorita
-            </label>
-            <div className="mt-3">
-              <ListBuilder
-                label="Páginas del libro (URLs de imagen, en orden)"
-                items={draft.pages}
-                onChange={(pages) => setDraft({ ...draft, pages })}
-                numbered
-                placeholder="https://imagen.com/pagina1.jpg"
-              />
-            </div>
-            <div className="mt-2 flex gap-2">
-              <button className="book-btn flex-1" onClick={save}>
-                Guardar
-              </button>
-              <button
-                className="book-btn book-btn-ghost"
-                onClick={() => (recipe ? setMode("view") : onClose())}
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="recipe-view">
-            <div className="recipe-pages">
-              <AnimatePresence mode="wait" custom={dir}>
-                {pages.length > 0 ? (
-                  <motion.img
-                    key={page}
-                    custom={dir}
-                    initial={{ rotateY: dir > 0 ? 55 : -55, opacity: 0 }}
-                    animate={{ rotateY: 0, opacity: 1 }}
-                    exit={{ rotateY: dir > 0 ? -55 : 55, opacity: 0 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="recipe-page-img"
-                    src={pages[page]}
-                    alt={`${recipe?.title} página ${page + 1}`}
-                  />
-                ) : (
-                  <div className="recipe-page-empty">
-                    <div style={{ fontSize: "3rem" }}>📖</div>
-                    <p className="book-section-sub">Esta receta aún no tiene páginas.</p>
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
+        <div className="recipe-form">
+          <h3 className="book-section-title" style={{ fontSize: "1.3rem" }}>
+            {recipe ? "✎ Editar receta" : "＋ Nueva receta"}
+          </h3>
 
-            <div className="recipe-side">
-              <h2 className="book-section-title" style={{ fontSize: "1.4rem" }}>
-                {recipe?.title}
-              </h2>
-              <div className="recipe-side-meta">
-                {recipe?.category && <span>{recipe.category}</span>}
-                <span>⏱ {recipe?.prepMinutes} min</span>
-                <span>👤 {recipe?.persons ?? 2}</span>
-              </div>
-              <div className="rcard-stars" style={{ fontSize: "1rem" }}>
-                {"★".repeat(Math.max(1, Math.min(5, recipe?.rating ?? 5)))}
-              </div>
+          {/* ---- Identidad ---- */}
+          <label className="book-label">Nombre que aparece</label>
+          <input
+            className="book-input"
+            value={draft.title}
+            onChange={(e) => set("title", e.target.value)}
+            placeholder="Ej: Pan Ceporros"
+          />
 
-              <div className="recipe-actions">
-                <button className="book-btn book-btn-ghost" onClick={toggleFav}>
-                  {fav ? "❤️ Favorita" : "🤍 Favorita"}
-                </button>
-                <button className="book-btn book-btn-ghost" onClick={print}>
-                  🖨 Imprimir
-                </button>
-                <button className="book-btn book-btn-ghost" onClick={share}>
-                  📱 Compartir
-                </button>
-              </div>
+          <label className="book-label">Categoría (filtro donde sale)</label>
+          <select
+            className="book-input"
+            value={draft.category}
+            onChange={(e) => set("category", e.target.value)}
+          >
+            <option value="">— Sin categoría —</option>
+            {CATEGORIES.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.emoji} {c.id}
+              </option>
+            ))}
+          </select>
 
-              {isAdmin && (
-                <div className="mt-3 flex gap-2">
-                  <button className="book-btn book-btn-ghost" onClick={() => setMode("edit")}>
-                    ✎ Editar
-                  </button>
-                  <button
-                    className="book-btn book-btn-ghost"
-                    style={{ borderColor: "var(--granate)", color: "var(--granate)" }}
-                    onClick={remove}
-                  >
-                    Eliminar
-                  </button>
-                </div>
+          {/* ---- Icono 1:1 ---- */}
+          <label className="book-label">Icono cuadrado (1:1) de la cuadrícula</label>
+          <div className="icon-row">
+            <div className="icon-prev">
+              {draft.iconUrl || draft.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={draft.iconUrl || draft.photoUrl} alt="" />
+              ) : (
+                <span>🍲</span>
               )}
             </div>
+            <input
+              className="book-input"
+              value={draft.iconUrl ?? ""}
+              onChange={(e) => set("iconUrl", e.target.value)}
+              placeholder="/cocina/iconos/mi-receta.png"
+            />
+          </div>
 
-            {pages.length > 1 && (
-              <div className="recipe-nav">
-                <button className="book-btn book-btn-ghost" disabled={page === 0} onClick={() => go(-1)}>
-                  ← Anterior
-                </button>
-                <span className="recipe-pagenum">
-                  {page + 1} / {pages.length}
-                </span>
-                <button
-                  className="book-btn book-btn-ghost"
-                  disabled={page === pages.length - 1}
-                  onClick={() => go(1)}
-                >
-                  Siguiente →
-                </button>
+          {/* ---- Datos ---- */}
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="book-label">Minutos</label>
+              <input
+                className="book-input"
+                type="number"
+                min={0}
+                value={draft.prepMinutes}
+                onChange={(e) => set("prepMinutes", Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <label className="book-label">Personas</label>
+              <input
+                className="book-input"
+                type="number"
+                min={1}
+                value={draft.persons}
+                onChange={(e) => set("persons", Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <label className="book-label">Valoración</label>
+              <div className="star-pick">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => set("rating", n)}
+                    style={{ color: n <= draft.rating ? "var(--oliva)" : "#c9b98f" }}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ---- ¿Del libro o nueva? ---- */}
+          <div className="book-toggle">
+            <label>
+              <input
+                type="checkbox"
+                checked={inBook}
+                onChange={(e) => set("bookPage", e.target.checked ? 0 : undefined)}
+              />{" "}
+              📖 Esta receta está en el libro físico
+            </label>
+            {inBook && (
+              <div className="mt-2">
+                <label className="book-label">Página del libro (0–{BOOK_PAGES - 1})</label>
+                <input
+                  className="book-input"
+                  type="number"
+                  min={0}
+                  max={BOOK_PAGES - 1}
+                  value={draft.bookPage ?? 0}
+                  onChange={(e) => set("bookPage", Number(e.target.value))}
+                />
               </div>
             )}
           </div>
-        )}
+
+          {/* ---- Receta nueva (sin libro) ---- */}
+          {!inBook && (
+            <>
+              <label className="book-label">Descripción / historia</label>
+              <textarea
+                className="book-input"
+                rows={3}
+                value={draft.description ?? ""}
+                onChange={(e) => set("description", e.target.value)}
+                placeholder="Una receta que nos encanta porque..."
+              />
+              <label className="book-label">Foto grande (URL)</label>
+              <input
+                className="book-input"
+                value={draft.photoUrl}
+                onChange={(e) => set("photoUrl", e.target.value)}
+                placeholder="https://..."
+              />
+              <ListBuilder
+                label="Ingredientes"
+                items={draft.ingredients2 ?? []}
+                onChange={(v) => set("ingredients2", v)}
+                placeholder="Ej: 350 g de carne picada"
+              />
+              <ListBuilder
+                label="Pasos"
+                items={draft.steps2 ?? []}
+                onChange={(v) => set("steps2", v)}
+                numbered
+                placeholder="Siguiente paso..."
+              />
+            </>
+          )}
+
+          <div className="mt-3 flex gap-2">
+            <button className="book-btn flex-1" onClick={save}>
+              Guardar
+            </button>
+            {recipe && (
+              <button
+                className="book-btn book-btn-ghost"
+                style={{ borderColor: "var(--granate)", color: "var(--granate)" }}
+                onClick={remove}
+              >
+                Eliminar
+              </button>
+            )}
+            <button className="book-btn book-btn-ghost" onClick={onClose}>
+              Cancelar
+            </button>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );
