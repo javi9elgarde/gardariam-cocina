@@ -306,3 +306,112 @@ textarea.book-input {
     background-position: center top;
   }
 }
+
+/* ===== Ficha completa de receta (todo en un clic) ===== */
+.rd-card {
+  position: relative;
+  width: min(1080px, 95vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.4rem 1.4rem;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 10% 6%, rgba(150, 110, 60, 0.1), transparent 34%),
+    linear-gradient(160deg, #fdf6e4 0%, #f0e2c2 100%);
+  box-shadow: 0 26px 62px rgba(30, 18, 8, 0.6);
+}
+.rd-card.is-book { border: 3px solid #9a6a34; }
+.rd-card.is-new { border: 3px dashed var(--salvia); }
+.rd-badge {
+  position: absolute;
+  left: 1.2rem;
+  top: -0.75rem;
+  font-family: var(--font-display), serif;
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #fdf6e4;
+  background: linear-gradient(160deg, #a9762f, #7a5228);
+  border: 2px solid #3f2a11;
+  border-radius: 999px;
+  padding: 0.25em 0.8em;
+}
+.rd-card.is-new .rd-badge {
+  background: linear-gradient(160deg, #7c8a44, #616e33);
+  border-color: #4f5a28;
+}
+.rd-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px dashed rgba(120, 84, 44, 0.35);
+}
+.rd-icon {
+  width: clamp(72px, 11vw, 120px);
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 3px solid #9a6a34;
+  flex: 0 0 auto;
+  box-shadow: 0 6px 14px rgba(60, 40, 20, 0.28);
+}
+.rd-head-txt { flex: 1; min-width: 0; }
+.rd-title {
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  color: var(--nogal);
+  line-height: 1.08;
+}
+.rd-stars { color: var(--oliva); font-size: 1rem; margin-top: 0.15rem; }
+.rd-story {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin-top: 0.4rem;
+}
+.rd-body {
+  display: grid;
+  grid-template-columns: 0.95fr 1.35fr 0.85fr;
+  gap: 1.1rem;
+  margin-top: 1rem;
+}
+.rd-col { min-width: 0; }
+.rd-h {
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.74rem;
+  color: var(--naranja);
+  text-align: center;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(120, 84, 44, 0.28);
+}
+.rd-ings,
+.rd-ficha {
+  padding: 0.8rem;
+  border-radius: 10px;
+  background: rgba(255, 252, 240, 0.6);
+  border: 1px solid rgba(120, 84, 44, 0.25);
+  align-self: start;
+}
+.rd-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+.rd-actions .book-btn { justify-content: center; width: 100%; }
+
+@media (max-width: 900px) {
+  .rd-body { grid-template-columns: 1fr; }
+  .rd-head { flex-direction: column; text-align: center; }
+}
+
+/* Arrastrar para reordenar (admin) */
+.rgrid li[draggable="true"] { cursor: grab; }
+.rgrid li[draggable="true"]:active { cursor: grabbing; }

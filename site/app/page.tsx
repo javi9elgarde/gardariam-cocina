@@ -1,16 +1,17 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import BookReader, { COVER } from "@/components/BookReader";
-import NewRecipeView from "@/components/NewRecipeView";
+import RecipeDetail from "@/components/RecipeDetail";
 import RecipePanel from "@/components/RecipePanel";
 import { useAuth } from "@/lib/auth";
-import { getRecipes, onStorageChange } from "@/lib/storage";
+import { getRecipes, onStorageChange, updateRecipe } from "@/lib/storage";
 import { useFavorites } from "@/lib/useFavorites";
 import { CATEGORIES, isBookRecipe, type Recipe } from "@/lib/types";
 
-type Tab = "recetas" | "favoritas" | "colecciones" | "nosotros";
+type Tab = "recetas" | "colecciones" | "nosotros";
+const FAV = "__fav__";
 
 const CAT_ICON: Record<string, string> = {
   Entrantes: "entrantes",
@@ -20,9 +21,7 @@ const CAT_ICON: Record<string, string> = {
   Pescados: "pescados",
   Vegetarianas: "vegetarianas",
   Postres: "postres",
-  Desayunos: "desayunos",
   "Salsas y bases": "salsas",
-  Bebidas: "bebidas",
 };
 
 function norm(s: string) {
@@ -38,11 +37,12 @@ export default function Home() {
 
   const [rawRecipes, setRawRecipes] = useState<Recipe[]>([]);
   const [editing, setEditing] = useState<Recipe | null | "new">(null);
+  const [detail, setDetail] = useState<Recipe | null>(null);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("recetas");
   const [readerPage, setReaderPage] = useState<number | null>(null);
-  const [viewing, setViewing] = useState<Recipe | null>(null);
+  const dragId = useRef<string | null>(null);
 
   useEffect(() => {
     const load = () => setRawRecipes(getRecipes());
@@ -58,12 +58,12 @@ export default function Home() {
   const filtered = useMemo(() => {
     const q = norm(query.trim());
     return recipes.filter((r) => {
-      if (tab === "favoritas" && !r.favorite) return false;
-      if (cat && r.category !== cat) return false;
+      if (cat === FAV && !r.favorite) return false;
+      if (cat && cat !== FAV && r.category !== cat) return false;
       if (q && !norm(r.title).includes(q)) return false;
       return true;
     });
-  }, [recipes, query, cat, tab]);
+  }, [recipes, query, cat]);
 
   const stats = useMemo(
     () => ({
@@ -75,13 +75,20 @@ export default function Home() {
     [recipes],
   );
 
-  /** Del libro -> abre el libro en su página. Nueva -> ficha propia. */
-  function openRecipe(r: Recipe) {
-    if (isBookRecipe(r)) setReaderPage(r.bookPage ?? COVER);
-    else setViewing(r);
+  /** Admin arrastra para reordenar */
+  function onDrop(targetId: string) {
+    const from = dragId.current;
+    dragId.current = null;
+    if (!from || from === targetId) return;
+    const ids = recipes.map((r) => r.id);
+    const fromIdx = ids.indexOf(from);
+    const toIdx = ids.indexOf(targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    ids.splice(toIdx, 0, ids.splice(fromIdx, 1)[0]);
+    ids.forEach((id, i) => updateRecipe(id, { order: i }));
   }
 
-  const showRecipes = tab === "recetas" || tab === "favoritas";
+  const detailLive = detail ? (recipes.find((r) => r.id === detail.id) ?? detail) : null;
 
   return (
     <div className="farm">
@@ -94,7 +101,6 @@ export default function Home() {
           {(
             [
               ["recetas", "📖 Recetas"],
-              ["favoritas", "❤️ Favoritas"],
               ["colecciones", "📦 Colecciones"],
               ["nosotros", "👥 Nosotros"],
             ] as [Tab, string][]
@@ -126,14 +132,10 @@ export default function Home() {
       {/* ---------- Cartel ---------- */}
       <header className="farm-head">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className="farm-sign-img"
-          src="/cocina/sign.png"
-          alt="Libro de Cocina Mariam & Javi"
-        />
+        <img className="farm-sign-img" src="/cocina/sign.png" alt="Libro de Cocina Mariam & Javi" />
       </header>
 
-      {showRecipes ? (
+      {tab === "recetas" ? (
         <>
           {/* ---------- Buscador + filtros ---------- */}
           <div className="farm-tools">
@@ -166,19 +168,27 @@ export default function Home() {
                   <img src={`/cocina/cat/${CAT_ICON[c.id]}.png`} alt={c.id} />
                 </button>
               ))}
+              <button
+                className={`cat-icon-btn ${cat === FAV ? "active" : ""}`}
+                onClick={() => setCat(cat === FAV ? null : FAV)}
+                title="Favoritas"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/cocina/cat/favoritas.png" alt="Favoritas" />
+              </button>
             </div>
           </div>
 
-          {/* ---------- Cuadrícula de recetas 1:1 ---------- */}
+          {/* ---------- Cuadrícula ---------- */}
           <section className="grid-wrap">
             <div className="grid-head">
               <div className="grid-head-mid">
                 <h2 className="grid-title">
-                  ❧ {tab === "favoritas" ? "Tus favoritas" : (cat ?? "Nuestras recetas")} ❧
+                  ❧ {cat === FAV ? "Tus favoritas" : (cat ?? "Nuestras recetas")} ❧
                 </h2>
                 <p className="grid-sub">
-                  {filtered.length} receta{filtered.length === 1 ? "" : "s"} · toca una para abrirla
-                  en el libro
+                  {filtered.length} receta{filtered.length === 1 ? "" : "s"}
+                  {isAdmin ? " · arrastra para reordenar" : " · toca una para abrirla"}
                 </p>
               </div>
               <button className="openbook-btn" onClick={() => setReaderPage(COVER)}>
@@ -191,10 +201,16 @@ export default function Home() {
             ) : (
               <ul className="rgrid">
                 {filtered.map((r) => (
-                  <li key={r.id}>
+                  <li
+                    key={r.id}
+                    draggable={isAdmin}
+                    onDragStart={() => (dragId.current = r.id)}
+                    onDragOver={(e) => isAdmin && e.preventDefault()}
+                    onDrop={() => isAdmin && onDrop(r.id)}
+                  >
                     <button
                       className={`rtile ${isBookRecipe(r) ? "is-book" : "is-new"}`}
-                      onClick={() => openRecipe(r)}
+                      onClick={() => setDetail(r)}
                     >
                       <span className="rtile-img">
                         {r.iconUrl || r.photoUrl ? (
@@ -203,7 +219,10 @@ export default function Home() {
                         ) : (
                           <span className="rtile-empty">🍲</span>
                         )}
-                        <span className="rtile-badge" title={isBookRecipe(r) ? "En el libro" : "Receta de casa"}>
+                        <span
+                          className="rtile-badge"
+                          title={isBookRecipe(r) ? "En el libro" : "Receta de casa"}
+                        >
                           {isBookRecipe(r) ? "📖" : "✎"}
                         </span>
                       </span>
@@ -306,26 +325,31 @@ export default function Home() {
       )}
 
       <AnimatePresence>
-        {readerPage !== null && (
-          <BookReader
-            key={`reader-${readerPage}`}
-            startPage={readerPage}
-            onClose={() => setReaderPage(null)}
+        {detailLive && (
+          <RecipeDetail
+            key={`d-${detailLive.id}`}
+            recipe={detailLive}
+            isAdmin={isAdmin}
+            onToggleFav={() => toggleFavorite(detailLive.id)}
+            onOpenBook={() => {
+              setReaderPage(detailLive.bookPage ?? COVER);
+              setDetail(null);
+            }}
+            onEdit={() => {
+              setEditing(detailLive);
+              setDetail(null);
+            }}
+            onClose={() => setDetail(null)}
           />
         )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {viewing && (
-          <NewRecipeView
-            key={`view-${viewing.id}`}
-            recipe={viewing}
-            isAdmin={isAdmin}
-            onEdit={() => {
-              setEditing(viewing);
-              setViewing(null);
-            }}
-            onClose={() => setViewing(null)}
+        {readerPage !== null && (
+          <BookReader
+            key={`reader-${readerPage}`}
+            startPage={readerPage}
+            onClose={() => setReaderPage(null)}
           />
         )}
       </AnimatePresence>

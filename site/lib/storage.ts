@@ -48,7 +48,13 @@ export function getRecipes(): Recipe[] {
   ids.forEach((id) => {
     out.push({ ...seedMap[id], ...recipesCache[id] } as Recipe);
   });
-  return out.sort((a, b) => a.title.localeCompare(b.title));
+  // orden manual (admin) primero; el resto, alfabético
+  return out.sort((a, b) => {
+    const ao = a.order ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.order ?? Number.MAX_SAFE_INTEGER;
+    if (ao !== bo) return ao - bo;
+    return a.title.localeCompare(b.title);
+  });
 }
 
 export function getRecipe(id: string): Recipe | undefined {

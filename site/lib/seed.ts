@@ -27,7 +27,7 @@ const S: Seed[] = [
   { id: "lentejas-curry", title: "Lentejas al Curry", category: "Vegetarianas", prepMinutes: 40, persons: 4, pages2: true },
   { id: "arroz-horno", title: "Arroz al Horno", category: "Arroces", prepMinutes: 60, persons: 4, pages2: true },
   { id: "paella", title: "Paella", category: "Arroces", prepMinutes: 50, persons: 4, pages2: true },
-  { id: "brioche", title: "Brioche", category: "Desayunos", prepMinutes: 120, persons: 6, pages2: true },
+  { id: "brioche", title: "Brioche", category: "Postres", prepMinutes: 120, persons: 6, pages2: true },
   { id: "tortilla-caramelizada", title: "Tortilla de Cebolla Caramelizada", category: "Entrantes", prepMinutes: 40, persons: 4, pages2: true },
   { id: "brownie", title: "Brownie", category: "Postres", prepMinutes: 40, persons: 6, pages2: false },
   { id: "tarta-coulant", title: "Tarta Coulant", category: "Postres", prepMinutes: 30, persons: 4, pages2: true },

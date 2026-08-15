@@ -11,6 +11,8 @@ export interface Recipe {
   prepMinutes: number;
   persons: number;
   favorite: boolean;
+  /** posición en la cuadrícula (admin la cambia arrastrando) */
+  order?: number;
   /** recetas nuevas (fuera del libro) */
   description?: string;
   ingredients2?: string[];
@@ -54,7 +56,5 @@ export const CATEGORIES: Category[] = [
   { id: "Pescados", emoji: "🐟" },
   { id: "Vegetarianas", emoji: "🥦" },
   { id: "Postres", emoji: "🍰" },
-  { id: "Desayunos", emoji: "🍳" },
   { id: "Salsas y bases", emoji: "🥣" },
-  { id: "Bebidas", emoji: "🥤" },
 ];
