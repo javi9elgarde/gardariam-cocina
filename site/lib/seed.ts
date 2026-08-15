@@ -16,7 +16,7 @@ interface Seed {
 }
 
 const S: Seed[] = [
-  { id: "panceta-puerros", title: "Panceta con Puerros", category: "Entrantes", prepMinutes: 45, persons: 4, pages2: false },
+  { id: "panceta-puerros", title: "Pan Ceporros", category: "Entrantes", prepMinutes: 90, persons: 4, pages2: false },
   { id: "focaccia", title: "Focaccia", category: "Entrantes", prepMinutes: 90, persons: 4, pages2: true },
   { id: "croquetas-cocido", title: "Croquetas de Cocido", category: "Entrantes", prepMinutes: 60, persons: 4, pages2: true },
   { id: "croquetas-rotini", title: "Croquetini Rotini", category: "Entrantes", prepMinutes: 45, persons: 2, pages2: true },

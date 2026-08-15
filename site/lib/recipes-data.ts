@@ -27,6 +27,46 @@ export interface RecipeData {
 }
 
 export const RECIPE_DATA: Record<string, RecipeData> = {
+  "panceta-puerros": {
+    story:
+      "Este pan casero es tan fácil de hacer que cualquier ceporro puede conseguir hacerlo. Es un tipo de pan de cristal pero a lo grande. Con él hicimos un bocata de ternera con queso de cabra y cebolla caramelizada brutal.",
+    difficulty: "Fácil",
+    ingredients: [
+      { qty: "500 g", name: "Harina de fuerza" },
+      { qty: "500 g", name: "Agua tibia" },
+      { qty: "5 g", name: "Levadura seca", note: "o 15 g fresca" },
+      { qty: "15 g", name: "Sal" },
+      { qty: "10 g", name: "Aceite de oliva" },
+    ],
+    steps: [
+      {
+        title: "Mezclar la masa",
+        text: "En un bol grande echamos la harina y la levadura. Removemos con una cuchara de madera y vamos añadiendo el agua poco a poco mientras seguimos removiendo. Cuando hayamos incorporado toda el agua y la masa esté bien mezclada, humedecemos un paño, tapamos el bol y dejamos reposar durante 10 minutos.",
+      },
+      {
+        title: "Pliegues",
+        text: "Añadimos la sal y el aceite. Con las manos mojadas, hacemos varios pliegues llevando la masa desde un extremo al otro desde varios puntos de la masa. Volvemos a tapar con el paño y dejamos reposar otros 10 minutos. Repetimos el proceso dos veces más.",
+      },
+      {
+        title: "Levado",
+        text: "Dejamos reposar la masa en un lugar templado, tapada con el paño, durante 45 minutos.",
+      },
+      {
+        title: "Formar y al horno",
+        text: "Precalentamos el horno a 250 °C con una bandeja de horno vacía en la parte inferior. Echamos un poco de harina sobre la mesa y volcamos la masa. Cortamos en varios rectángulos y, con cuidado, los pasamos ligeramente por harina. Colocamos los rectángulos sobre otra bandeja con papel de horno y la ponemos en la mitad del horno.",
+      },
+      {
+        title: "Vapor y horneado",
+        text: "Vertemos rápidamente agua muy fría con unos cubitos de hielo en la bandeja inferior para generar vapor. Cerramos el horno rápido y horneamos durante 10 minutos.",
+      },
+      {
+        title: "Enfriar",
+        text: "Retiramos los panecillos del horno y los dejamos enfriar sobre una rejilla para que el aire circule también por la parte inferior. Una vez frío, se puede comer o congelar para otro día.",
+      },
+    ],
+    tip: "El truco está en el vapor: el hielo en la bandeja de abajo le da esa corteza crujiente.",
+  },
+
   "lasana": {
     story:
       "Esta receta tiene el punto de que no necesitamos horno para hacerla. Nuestra boloñesa es la unión de la receta tradicional italiana con cositas nuestras. El truco al final es dejar la boloñesa cuanto más tiempo mejor para conseguir un increíble sabor.",
