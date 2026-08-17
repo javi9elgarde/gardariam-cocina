@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import RecipeSocial from "@/components/RecipeSocial";
 import { getRecipeData } from "@/lib/recipes-data";
 import { useChecklist } from "@/lib/useChecklist";
 import { useProgress } from "@/lib/useProgress";
@@ -205,6 +206,8 @@ export default function RecipeDetail({
             </div>
           </aside>
         </div>
+
+        <RecipeSocial recipeId={recipe.id} />
       </motion.div>
     </motion.div>
   );
