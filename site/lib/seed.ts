@@ -16,6 +16,10 @@ const HAS_ICON = new Set<string>([
   "paella",
   "brioche",
   "tortilla-caramelizada",
+  "brownie",
+  "tarta-coulant",
+  "tarta-queso",
+  "cookies",
 ]);
 
 /** Recetas del libro (páginas ilustradas ya finales). Se muestran siempre;

@@ -196,7 +196,17 @@ export default function Home() {
                       <span className="rtile-img">
                         {r.iconUrl || r.photoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={r.iconUrl || r.photoUrl} alt={r.title} />
+                          <img
+                            src={r.iconUrl || r.photoUrl}
+                            alt={r.title}
+                            onError={(e) => {
+                              // si el icono no existe, usar la foto de la página
+                              const img = e.currentTarget;
+                              if (r.photoUrl && img.src !== location.origin + r.photoUrl) {
+                                img.src = r.photoUrl;
+                              }
+                            }}
+                          />
                         ) : (
                           <span className="rtile-empty">🍲</span>
                         )}
