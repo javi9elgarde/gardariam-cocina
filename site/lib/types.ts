@@ -11,8 +11,10 @@ export interface Recipe {
   prepMinutes: number;
   persons: number;
   favorite: boolean;
-  /** posición en la cuadrícula (admin la cambia arrastrando) */
-  order?: number;
+  /** posición en la cuadrícula (admin la cambia arrastrando).
+   *  Se usa `sortIndex` y no `order` porque en Firestore quedó guardado
+   *  un `order` antiguo (alfabético) que pisaba el orden del libro. */
+  sortIndex?: number;
   /** recetas nuevas (fuera del libro) */
   description?: string;
   ingredients2?: string[];

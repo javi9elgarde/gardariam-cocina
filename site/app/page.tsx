@@ -83,7 +83,7 @@ export default function Home() {
     const toIdx = ids.indexOf(targetId);
     if (fromIdx < 0 || toIdx < 0) return;
     ids.splice(toIdx, 0, ids.splice(fromIdx, 1)[0]);
-    ids.forEach((id, i) => updateRecipe(id, { order: i }));
+    ids.forEach((id, i) => updateRecipe(id, { sortIndex: i }));
   }
 
   const detailLive = detail ? (recipes.find((r) => r.id === detail.id) ?? detail) : null;

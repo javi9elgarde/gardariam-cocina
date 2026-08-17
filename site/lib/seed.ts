@@ -60,7 +60,7 @@ export const SEED_RECIPES: Recipe[] = S.map((r) => ({
   photoUrl: `/cocina/paginas/${r.id}-card.jpg`,
   iconUrl: HAS_ICON.has(r.id) ? `/cocina/iconos/${r.id}.jpg` : "",
   bookPage: RECIPE_PAGE[r.id],
-  order: BOOK_ORDER.indexOf(r.id),
+  sortIndex: BOOK_ORDER.indexOf(r.id),
   pages: r.pages2
     ? [`/cocina/paginas/${r.id}-0.jpg`, `/cocina/paginas/${r.id}-1.jpg`]
     : [`/cocina/paginas/${r.id}-0.jpg`],

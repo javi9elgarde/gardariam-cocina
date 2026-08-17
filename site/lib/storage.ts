@@ -48,10 +48,10 @@ export function getRecipes(): Recipe[] {
   ids.forEach((id) => {
     out.push({ ...seedMap[id], ...recipesCache[id] } as Recipe);
   });
-  // orden manual (admin) primero; el resto, alfabético
+  // orden del libro / manual del admin; si falta, por página del libro
   return out.sort((a, b) => {
-    const ao = a.order ?? Number.MAX_SAFE_INTEGER;
-    const bo = b.order ?? Number.MAX_SAFE_INTEGER;
+    const ao = a.sortIndex ?? a.bookPage ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.sortIndex ?? b.bookPage ?? Number.MAX_SAFE_INTEGER;
     if (ao !== bo) return ao - bo;
     return a.title.localeCompare(b.title);
   });
