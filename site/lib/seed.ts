@@ -17,22 +17,22 @@ interface Seed {
 
 const S: Seed[] = [
   { id: "panceta-puerros", title: "Pan Ceporros", category: "Entrantes", prepMinutes: 90, persons: 4, pages2: false },
-  { id: "focaccia", title: "Focaccia", category: "Entrantes", prepMinutes: 90, persons: 4, pages2: true },
+  { id: "focaccia", title: "Focacciamo", category: "Entrantes", prepMinutes: 90, persons: 4, pages2: true },
   { id: "croquetas-cocido", title: "Croquetas de Cocido", category: "Entrantes", prepMinutes: 60, persons: 4, pages2: true },
   { id: "croquetas-rotini", title: "Croquetini Rotini", category: "Entrantes", prepMinutes: 45, persons: 2, pages2: true },
-  { id: "risotto", title: "Risotto", category: "Arroces", prepMinutes: 35, persons: 2, pages2: false },
+  { id: "risotto", title: "Risotto a la Milanesa", category: "Arroces", prepMinutes: 35, persons: 2, pages2: false },
   { id: "lasana", title: "Lasaña Deconstruida", category: "Pasta", prepMinutes: 60, persons: 4, pages2: true },
   { id: "pollo-ajillo", title: "Pollo al Ajillo", category: "Carnes", prepMinutes: 35, persons: 6, pages2: true },
   { id: "pollo-curry", title: "Pollo al Curry", category: "Carnes", prepMinutes: 35, persons: 2, pages2: true },
   { id: "lentejas-curry", title: "Lentejas al Curry", category: "Vegetarianas", prepMinutes: 40, persons: 4, pages2: true },
   { id: "arroz-horno", title: "Arroz al Horno", category: "Arroces", prepMinutes: 60, persons: 4, pages2: true },
-  { id: "paella", title: "Paella", category: "Arroces", prepMinutes: 50, persons: 4, pages2: true },
-  { id: "brioche", title: "Brioche", category: "Postres", prepMinutes: 120, persons: 6, pages2: true },
-  { id: "tortilla-caramelizada", title: "Tortilla de Cebolla Caramelizada", category: "Entrantes", prepMinutes: 40, persons: 4, pages2: true },
-  { id: "brownie", title: "Brownie", category: "Postres", prepMinutes: 40, persons: 6, pages2: false },
-  { id: "tarta-coulant", title: "Tarta Coulant", category: "Postres", prepMinutes: 30, persons: 4, pages2: true },
-  { id: "tarta-queso", title: "Tarta de Queso Mery", category: "Postres", prepMinutes: 60, persons: 6, pages2: true },
-  { id: "cookies", title: "Cookies de Chocolate", category: "Postres", prepMinutes: 30, persons: 4, pages2: true },
+  { id: "paella", title: "Paella Valenciana", category: "Arroces", prepMinutes: 70, persons: 6, pages2: true },
+  { id: "brioche", title: "Brioche de Costillas", category: "Carnes", prepMinutes: 120, persons: 8, pages2: true },
+  { id: "tortilla-caramelizada", title: "Tortilla de Cebolla Caramelizada", category: "Entrantes", prepMinutes: 150, persons: 6, pages2: true },
+  { id: "brownie", title: "Brownie Express", category: "Postres", prepMinutes: 5, persons: 1, pages2: false },
+  { id: "tarta-coulant", title: "Tarta Coulant", category: "Postres", prepMinutes: 50, persons: 6, pages2: true },
+  { id: "tarta-queso", title: "Tarta de Queso de Mery", category: "Postres", prepMinutes: 60, persons: 8, pages2: true },
+  { id: "cookies", title: "Cookies Blanditas", category: "Postres", prepMinutes: 30, persons: 4, pages2: true },
 ];
 
 export const SEED_RECIPES: Recipe[] = S.map((r) => ({
