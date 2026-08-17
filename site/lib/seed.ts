@@ -1,8 +1,22 @@
 import { RECIPE_PAGE } from "./book";
 import type { Recipe } from "./types";
 
-/** Iconos 1:1 disponibles (public/cocina/iconos/<id>.png) */
-const HAS_ICON = new Set<string>(["panceta-puerros"]);
+/** Iconos 1:1 disponibles (public/cocina/iconos/<id>.jpg) */
+const HAS_ICON = new Set<string>([
+  "panceta-puerros",
+  "focaccia",
+  "croquetas-cocido",
+  "croquetas-rotini",
+  "risotto",
+  "lasana",
+  "pollo-ajillo",
+  "pollo-curry",
+  "lentejas-curry",
+  "arroz-horno",
+  "paella",
+  "brioche",
+  "tortilla-caramelizada",
+]);
 
 /** Recetas del libro (páginas ilustradas ya finales). Se muestran siempre;
  *  cualquier edición del admin (Firestore) con el mismo id las sobrescribe. */
@@ -35,12 +49,18 @@ const S: Seed[] = [
   { id: "cookies", title: "Cookies Blanditas", category: "Postres", prepMinutes: 30, persons: 4, pages2: true },
 ];
 
+/** Orden = el mismo que en el libro físico (por número de página) */
+const BOOK_ORDER: string[] = [...S]
+  .map((r) => r.id)
+  .sort((a, b) => (RECIPE_PAGE[a] ?? 999) - (RECIPE_PAGE[b] ?? 999));
+
 export const SEED_RECIPES: Recipe[] = S.map((r) => ({
   id: r.id,
   title: r.title,
   photoUrl: `/cocina/paginas/${r.id}-card.jpg`,
-  iconUrl: HAS_ICON.has(r.id) ? `/cocina/iconos/${r.id}.png` : "",
+  iconUrl: HAS_ICON.has(r.id) ? `/cocina/iconos/${r.id}.jpg` : "",
   bookPage: RECIPE_PAGE[r.id],
+  order: BOOK_ORDER.indexOf(r.id),
   pages: r.pages2
     ? [`/cocina/paginas/${r.id}-0.jpg`, `/cocina/paginas/${r.id}-1.jpg`]
     : [`/cocina/paginas/${r.id}-0.jpg`],
