@@ -323,9 +323,8 @@ textarea.book-input {
 .rd-card.is-book { border: 3px solid #9a6a34; }
 .rd-card.is-new { border: 3px dashed var(--salvia); }
 .rd-badge {
-  position: absolute;
-  left: 1.2rem;
-  top: -0.75rem;
+  display: inline-block;
+  margin-bottom: 0.9rem;
   font-family: var(--font-display), serif;
   font-size: 0.64rem;
   text-transform: uppercase;

@@ -10,7 +10,6 @@ import { getRecipes, onStorageChange, updateRecipe } from "@/lib/storage";
 import { useFavorites } from "@/lib/useFavorites";
 import { CATEGORIES, isBookRecipe, type Recipe } from "@/lib/types";
 
-type Tab = "recetas" | "colecciones" | "nosotros";
 const FAV = "__fav__";
 
 const CAT_ICON: Record<string, string> = {
@@ -40,7 +39,6 @@ export default function Home() {
   const [detail, setDetail] = useState<Recipe | null>(null);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("recetas");
   const [readerPage, setReaderPage] = useState<number | null>(null);
   const dragId = useRef<string | null>(null);
 
@@ -97,23 +95,7 @@ export default function Home() {
         <a className="farm-brand" href="https://gardariam.com">
           🏠 Hub
         </a>
-        <div className="farm-links">
-          {(
-            [
-              ["recetas", "📖 Recetas"],
-              ["colecciones", "📦 Colecciones"],
-              ["nosotros", "👥 Nosotros"],
-            ] as [Tab, string][]
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              className={`farm-link ${tab === id ? "active" : ""}`}
-              onClick={() => setTab(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <div className="farm-links" />
         <div className="farm-user">
           {!loading && (
             <button
@@ -135,8 +117,7 @@ export default function Home() {
         <img className="farm-sign-img" src="/cocina/sign.png" alt="Libro de Cocina Mariam & Javi" />
       </header>
 
-      {tab === "recetas" ? (
-        <>
+      <>
           {/* ---------- Buscador + filtros ---------- */}
           <div className="farm-tools">
             <label className="book-search">
@@ -279,15 +260,7 @@ export default function Home() {
               </ul>
             )}
           </section>
-        </>
-      ) : (
-        <div className="farm-empty">
-          <h2 className="book-section-title">
-            {tab === "colecciones" ? "📦 Colecciones" : "👥 Nosotros"}
-          </h2>
-          <p className="book-section-sub mt-2">Próximamente ❧</p>
-        </div>
-      )}
+      </>
 
       {/* ---------- Pie ---------- */}
       <footer className="farm-foot">
