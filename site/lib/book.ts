@@ -28,7 +28,7 @@ export const BOOK_SECTIONS: BookSection[] = [
   { id: "entrantes", label: "Entrantes", emoji: "🥗", page: 4 },
   { id: "principales", label: "Principales", emoji: "🍗", page: 12 },
   { id: "postres", label: "Postres", emoji: "🍰", page: 30 },
-  { id: "retos", label: "Retos", emoji: "⭐", page: 39 },
+  { id: "retos", label: "Retos", emoji: "⭐", page: 38 },
 ];
 
 /** ¿qué receta se está viendo en estas páginas? (para la ficha resumen) */

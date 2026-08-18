@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   BOOK_PAGES,
   BOOK_SECTIONS,
@@ -33,9 +33,6 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
   const [isWide, setIsWide] = useState(true);
   const [ficha, setFicha] = useState(false);
   const [ings, setIngs] = useState(false);
-  const touchX = useRef<number | null>(null);
-  const touchY = useRef<number | null>(null);
-  const swiped = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 900px)");
@@ -47,7 +44,8 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
 
   const isCover = page === COVER;
   const isBack = page === BACK;
-  const left = isCover || isBack ? page : page % 2 === 0 ? page : page - 1;
+  // pantalla ancha: pliego par-impar. Móvil: la hoja tal cual.
+  const left = isCover || isBack ? page : isWide ? (page % 2 === 0 ? page : page - 1) : page;
   const right = left + 1;
 
   const go = useCallback(
@@ -55,11 +53,11 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
       sfx.pagina();
       setFicha(false);
       setPage((p) => {
-        const paso = isWide ? 2 : 1;
         if (p === COVER) return d > 0 ? 0 : COVER; // desde la portada solo se avanza
         if (p === BACK) return d < 0 ? (isWide ? BOOK_PAGES - 2 : BOOK_PAGES - 1) : BACK;
-        const base = p % 2 === 0 ? p : p - 1;
-        const next = base + d * paso;
+        // en móvil se avanza hoja a hoja; en ancho, de pliego en pliego
+        const base = isWide ? (p % 2 === 0 ? p : p - 1) : p;
+        const next = base + d * (isWide ? 2 : 1);
         if (next < 0) return COVER; // volver a la portada
         if (next > BOOK_PAGES - 1) return BACK; // al final, la contraportada
         return next;
@@ -123,35 +121,7 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
         </div>
       </div>
 
-      <div
-        className={`reader-stage ${zoom ? "is-zoom" : ""}`}
-        onTouchStart={(e) => {
-          const t = e.touches[0];
-          touchX.current = t.clientX;
-          touchY.current = t.clientY;
-          swiped.current = false;
-        }}
-        onTouchMove={(e) => {
-          if (touchX.current === null || touchY.current === null) return;
-          const dx = e.touches[0].clientX - touchX.current;
-          const dy = e.touches[0].clientY - touchY.current;
-          // deslizamiento claramente horizontal
-          if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-            swiped.current = true;
-          }
-        }}
-        onTouchEnd={(e) => {
-          if (touchX.current === null || touchY.current === null) return;
-          const dx = e.changedTouches[0].clientX - touchX.current;
-          const dy = e.changedTouches[0].clientY - touchY.current;
-          touchX.current = null;
-          touchY.current = null;
-          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-            swiped.current = true;
-            go(dx < 0 ? 1 : -1);
-          }
-        }}
-      >
+      <div className={`reader-stage ${zoom ? "is-zoom" : ""}`}>
         <button
           className="reader-arrow left"
           onClick={() => go(-1)}
@@ -164,10 +134,7 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
         {/* Sin animación de pasar hoja: se muestra directamente */}
         <div
           className="reader-spread"
-          onClick={() => {
-            if (swiped.current) { swiped.current = false; return; }
-            setZoom((z) => !z);
-          }}
+          onClick={() => setZoom((z) => !z)}
         >
           {isBack ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -293,7 +260,7 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
             </button>
           ))}
         </div>
-        <p className="reader-hint">← → flechas · desliza en móvil · toca la hoja para ampliar</p>
+        <p className="reader-hint">Usa las flechas ‹ › para pasar de página · toca la hoja para ampliar</p>
       </div>
     </motion.div>
   );
