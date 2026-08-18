@@ -13,6 +13,7 @@ export function pageSrcHD(i: number): string {
 
 export const COVER_SRC = "/cocina/portada.jpg";
 export const COVER_SRC_HD = "/cocina/libro-hd/portada.jpg";
+export const BACK_SRC = "/cocina/contraportada.jpg";
 
 export interface BookSection {
   id: string;

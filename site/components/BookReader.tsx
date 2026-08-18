@@ -6,6 +6,7 @@ import {
   BOOK_PAGES,
   BOOK_SECTIONS,
   COVER_SRC,
+  BACK_SRC,
   COVER_SRC_HD,
   pageSrc,
   pageSrcHD,
@@ -18,6 +19,8 @@ import type { Recipe } from "@/lib/types";
 
 /** -1 = portada del libro */
 export const COVER = -1;
+/** contraportada: va justo detrás de la última página */
+export const BACK = BOOK_PAGES;
 
 interface BookReaderProps {
   startPage?: number;
@@ -31,6 +34,8 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
   const [ficha, setFicha] = useState(false);
   const [ings, setIngs] = useState(false);
   const touchX = useRef<number | null>(null);
+  const touchY = useRef<number | null>(null);
+  const swiped = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 900px)");
@@ -41,7 +46,8 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
   }, []);
 
   const isCover = page === COVER;
-  const left = isCover ? COVER : page % 2 === 0 ? page : page - 1;
+  const isBack = page === BACK;
+  const left = isCover || isBack ? page : page % 2 === 0 ? page : page - 1;
   const right = left + 1;
 
   const go = useCallback(
@@ -49,11 +55,14 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
       sfx.pagina();
       setFicha(false);
       setPage((p) => {
+        const paso = isWide ? 2 : 1;
         if (p === COVER) return d > 0 ? 0 : COVER; // desde la portada solo se avanza
+        if (p === BACK) return d < 0 ? (isWide ? BOOK_PAGES - 2 : BOOK_PAGES - 1) : BACK;
         const base = p % 2 === 0 ? p : p - 1;
-        const next = base + d * (isWide ? 2 : 1);
+        const next = base + d * paso;
         if (next < 0) return COVER; // volver a la portada
-        return Math.min(BOOK_PAGES - 1, next);
+        if (next > BOOK_PAGES - 1) return BACK; // al final, la contraportada
+        return next;
       });
     },
     [isWide],
@@ -70,12 +79,14 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
   }, [go, onClose, zoom]);
 
   const atStart = isCover;
-  const atEnd = !isCover && (isWide ? right : left) >= BOOK_PAGES - 1;
+  const atEnd = isBack;
   const sectionLabel = isCover
     ? "Portada"
+    : isBack
+    ? "Contraportada"
     : ([...BOOK_SECTIONS].reverse().find((s) => s.page <= left)?.label ?? "");
 
-  const recipeId = isCover ? null : recipeIdForPage(left, right);
+  const recipeId = isCover || isBack ? null : recipeIdForPage(left, right);
   const recipe: Recipe | undefined = recipeId ? getRecipe(recipeId) : undefined;
 
   return (
@@ -114,12 +125,31 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
 
       <div
         className={`reader-stage ${zoom ? "is-zoom" : ""}`}
-        onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
+        onTouchStart={(e) => {
+          const t = e.touches[0];
+          touchX.current = t.clientX;
+          touchY.current = t.clientY;
+          swiped.current = false;
+        }}
+        onTouchMove={(e) => {
+          if (touchX.current === null || touchY.current === null) return;
+          const dx = e.touches[0].clientX - touchX.current;
+          const dy = e.touches[0].clientY - touchY.current;
+          // deslizamiento claramente horizontal
+          if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+            swiped.current = true;
+          }
+        }}
         onTouchEnd={(e) => {
-          if (touchX.current === null) return;
+          if (touchX.current === null || touchY.current === null) return;
           const dx = e.changedTouches[0].clientX - touchX.current;
-          if (Math.abs(dx) > 45) go(dx < 0 ? 1 : -1);
+          const dy = e.changedTouches[0].clientY - touchY.current;
           touchX.current = null;
+          touchY.current = null;
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+            swiped.current = true;
+            go(dx < 0 ? 1 : -1);
+          }
         }}
       >
         <button
@@ -132,8 +162,17 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
         </button>
 
         {/* Sin animación de pasar hoja: se muestra directamente */}
-        <div className="reader-spread" onClick={() => setZoom((z) => !z)}>
-          {isCover ? (
+        <div
+          className="reader-spread"
+          onClick={() => {
+            if (swiped.current) { swiped.current = false; return; }
+            setZoom((z) => !z);
+          }}
+        >
+          {isBack ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="reader-page" src={BACK_SRC} alt="Contraportada del libro" />
+          ) : isCover ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               className="reader-page"
@@ -224,6 +263,8 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
         <p className="reader-pageinfo">
           {isCover ? (
             "Portada"
+          ) : isBack ? (
+            "Contraportada"
           ) : (
             <>
               Pág. <b>{left + 1}</b>
