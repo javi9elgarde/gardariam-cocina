@@ -34,8 +34,12 @@ export interface Profile {
   junimo: Junimo;
 }
 
+/** Se sube al cambiar los dibujos, para que nadie se quede con la versión antigua en caché */
+const JUNIMO_VER = "2";
+
 export function junimoSrc(j: string): string {
-  return `/cocina/junimos/${JUNIMOS.includes(j as Junimo) ? j : "verde"}.png`;
+  const color = JUNIMOS.includes(j as Junimo) ? j : "verde";
+  return `/cocina/junimos/${color}.png?v=${JUNIMO_VER}`;
 }
 
 /* ---------------- Perfil del usuario ---------------- */
