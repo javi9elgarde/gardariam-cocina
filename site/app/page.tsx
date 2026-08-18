@@ -39,6 +39,7 @@ export default function Home() {
   const { profile, loaded: profileLoaded } = useProfile();
   const [editProfile, setEditProfile] = useState(false);
   const [showRetos, setShowRetos] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
 
   const [rawRecipes, setRawRecipes] = useState<Recipe[]>([]);
   const [editing, setEditing] = useState<Recipe | null | "new">(null);
@@ -103,7 +104,7 @@ export default function Home() {
         </a>
         <div className="farm-links">
           <button className="farm-link" onClick={() => setShowRetos(true)}>
-            ⭐ Retos
+            Retos
           </button>
         </div>
         <div className="farm-user">
@@ -113,26 +114,44 @@ export default function Home() {
             </button>
           )}
           {user && (
-            <>
+            <div className="user-menu-wrap">
               <button
-                className="farm-link"
-                onClick={() => setEditProfile(true)}
-                title="Cambiar nombre y junimo"
+                className="user-avatar-btn"
+                onClick={() => setUserMenu((v) => !v)}
+                aria-label="Tu perfil"
               >
-                {profile?.name ?? "Mi perfil"}
-                {isAdmin ? " ⚜" : ""}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={junimoSrc(profile?.junimo ?? "verde")} alt="" />
               </button>
-              <button className="farm-link" onClick={signOutUser}>
-                Salir
-              </button>
-            </>
+              {userMenu && (
+                <>
+                  <div className="user-menu-back" onClick={() => setUserMenu(false)} />
+                  <div className="user-menu">
+                    <p className="user-menu-name">
+                      {profile?.name ?? "Sin nombre"}
+                      {isAdmin && <span className="user-menu-admin">⚜ Admin</span>}
+                    </p>
+                    <button
+                      onClick={() => {
+                        setUserMenu(false);
+                        setEditProfile(true);
+                      }}
+                    >
+                      ✎ Editar perfil
+                    </button>
+                    <button
+                      onClick={() => {
+                        setUserMenu(false);
+                        signOutUser();
+                      }}
+                    >
+                      ↪ Salir
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            className="farm-avatar"
-            src={user ? junimoSrc(profile?.junimo ?? "verde") : "/cocina/mascota-chef.png"}
-            alt=""
-          />
         </div>
       </nav>
 

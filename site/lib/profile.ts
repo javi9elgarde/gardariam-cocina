@@ -4,8 +4,12 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
+  query,
   setDoc,
+  updateDoc,
+  where,
   type Unsubscribe,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -60,14 +64,31 @@ export function useProfile() {
 
   async function save(p: Profile) {
     if (!user) return;
+    const name = p.name.trim().slice(0, 24);
     await setDoc(doc(db, "profiles", user.uid), {
-      name: p.name.trim().slice(0, 24),
+      name,
       junimo: p.junimo,
       uid: user.uid,
     });
+    // el nombre y el junimo nuevos se aplican también a lo ya publicado
+    await renameEverywhere(user.uid, name, p.junimo);
   }
 
   return { profile, loaded, save };
+}
+
+/** Cambia el nombre/junimo en los comentarios y fotos ya publicados */
+async function renameEverywhere(uid: string, name: string, junimo: string) {
+  for (const col of ["comments", "photos"]) {
+    try {
+      const snap = await getDocs(query(collection(db, col), where("uid", "==", uid)));
+      await Promise.all(
+        snap.docs.map((d) => updateDoc(doc(db, col, d.id), { name, junimo })),
+      );
+    } catch {
+      /* si las reglas no lo permiten, el perfil ya se guardó igualmente */
+    }
+  }
 }
 
 /* ---------------- Retos: sellar recetas hechas ---------------- */

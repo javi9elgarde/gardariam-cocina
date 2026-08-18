@@ -760,3 +760,124 @@ textarea.book-input {
   font-weight: 800;
   color: var(--naranja);
 }
+
+/* ===== Barra: RETOS siempre centrado ===== */
+.farm-nav {
+  position: sticky;
+  z-index: 60;
+}
+.farm-links {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  flex: 0 0 auto;
+  overflow: visible;
+}
+.farm-links .farm-link {
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+.farm-user {
+  margin-left: auto;
+}
+
+/* Menú del junimo */
+.user-menu-wrap {
+  position: relative;
+}
+.user-avatar-btn {
+  padding: 0;
+  border: 2px solid #3f2a11;
+  border-radius: 8px;
+  background: #d8bd86;
+  cursor: pointer;
+  line-height: 0;
+  transition: filter 0.15s;
+}
+.user-avatar-btn:hover {
+  filter: brightness(1.1);
+}
+.user-avatar-btn img {
+  width: 34px;
+  height: 34px;
+  image-rendering: pixelated;
+  display: block;
+}
+.user-menu-back {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+}
+.user-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 80;
+  min-width: 190px;
+  padding: 0.6rem;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #fdf6e4, #f0e2c2);
+  border: 2px solid #7a5228;
+  box-shadow: 0 12px 28px rgba(20, 14, 4, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.user-menu-name {
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--nogal);
+  text-align: center;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.2rem;
+  border-bottom: 1px dashed rgba(120, 84, 44, 0.4);
+}
+.user-menu-admin {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--naranja);
+}
+.user-menu button {
+  font-family: var(--font-display), serif;
+  font-size: 0.8rem;
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.user-menu button:hover {
+  background: rgba(200, 154, 60, 0.2);
+}
+
+/* ===== Fondo fijo (no se mueve al cambiar de filtro) ===== */
+.farm {
+  background: none !important;
+}
+.farm::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: url(/cocina/fondo.jpg) center center / cover no-repeat;
+}
+.farm::before {
+  position: fixed;
+  z-index: 1;
+}
+.farm > * {
+  position: relative;
+  z-index: 10;
+}
+@media (orientation: portrait), (max-width: 820px) {
+  .farm::after {
+    /* la parte bonita: casa, campo y flores, no solo cielo */
+    background-image: url(/cocina/fondo-movil.jpg);
+    background-position: center 78%;
+  }
+}
