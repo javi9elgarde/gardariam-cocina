@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { junimoSrc, useProfile } from "@/lib/profile";
-import { addComment, deleteComment, watchComments, type Comment } from "@/lib/social";
+import {
+  addComment,
+  deleteComment,
+  deletePhoto,
+  uploadPhoto,
+  watchComments,
+  watchPhotos,
+  type Comment,
+  type GuestPhoto,
+} from "@/lib/social";
 
 interface Props {
   recipeId: string;
@@ -16,8 +25,31 @@ export default function RecipeSocial({ recipeId }: Props) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<GuestPhoto[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => watchComments(recipeId, setComments), [recipeId]);
+  useEffect(() => watchPhotos(recipeId, setPhotos), [recipeId]);
+
+  const myPhoto = user ? photos.find((p) => p.uid === user.uid) : undefined;
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 12 * 1024 * 1024) {
+      setErr("La foto es muy grande (máx. 12 MB).");
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      await uploadPhoto(recipeId, user, file, profile ?? undefined);
+    } catch {
+      setErr("No se pudo subir la foto.");
+    }
+    setBusy(false);
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   async function send() {
     if (!user || !text.trim()) return;
@@ -34,11 +66,11 @@ export default function RecipeSocial({ recipeId }: Props) {
 
   return (
     <section className="soc">
-      <h4 className="rd-h">💬 Vuestros comentarios</h4>
+      <h4 className="rd-h">💬 Vuestros comentarios y fotos</h4>
 
       {!user ? (
         <div className="soc-login">
-          <p>Entra con tu cuenta de Google para dejar un comentario.</p>
+          <p>Entra con tu cuenta de Google para comentar y subir tu foto.</p>
           <button className="book-btn" onClick={signIn}>
             Entrar con Google
           </button>
@@ -59,13 +91,39 @@ export default function RecipeSocial({ recipeId }: Props) {
               <button className="book-btn" onClick={send} disabled={busy || !text.trim()}>
                 Publicar
               </button>
+              <button
+                className="book-btn book-btn-ghost"
+                onClick={() => fileRef.current?.click()}
+                disabled={busy}
+              >
+                📷 {myPhoto ? "Cambiar mi foto" : "Subir mi foto"}
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
             </div>
+            <p className="soc-note">Una foto por persona y receta.</p>
           </div>
         </>
       )}
 
       {err && <p className="soc-err">{err}</p>}
       {busy && <p className="soc-note">Publicando…</p>}
+
+      {photos.length > 0 && (
+        <div className="soc-gallery">
+          {photos.map((p) => (
+            <figure key={p.id} className="soc-photo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.url} alt={"Foto de " + p.name} />
+              <figcaption>{p.name}</figcaption>
+              {(isAdmin || p.uid === user?.uid) && (
+                <button className="soc-del" onClick={() => deletePhoto(p)} aria-label="Borrar foto">
+                  ✕
+                </button>
+              )}
+            </figure>
+          ))}
+        </div>
+      )}
 
       {/* --- Comentarios --- */}
       <ul className="soc-list">
