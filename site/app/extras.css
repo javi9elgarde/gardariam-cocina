@@ -881,3 +881,57 @@ textarea.book-input {
     background-position: center 78%;
   }
 }
+
+/* La barra siempre por encima del cartel y del menú */
+.farm > .farm-nav {
+  z-index: 200;
+}
+.user-menu {
+  z-index: 220;
+}
+.user-menu-back {
+  z-index: 210;
+}
+
+/* ===== Botón RETOS destacado ===== */
+.farm-links .farm-link {
+  color: #3a2a0e;
+  background: linear-gradient(160deg, #ffd977 0%, #e8b23c 55%, #c8901f 100%);
+  border: 2px solid #6b4a12;
+  border-radius: 10px;
+  padding: 0.45rem 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-shadow: 0 1px 0 rgba(255, 245, 210, 0.6);
+  box-shadow:
+    0 0 0 2px rgba(255, 233, 170, 0.35),
+    0 3px 10px rgba(20, 14, 4, 0.45),
+    inset 0 1px 0 rgba(255, 250, 220, 0.7);
+  animation: retos-glow 2.4s ease-in-out infinite;
+}
+.farm-links .farm-link:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+@keyframes retos-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(255, 233, 170, 0.35),
+      0 3px 10px rgba(20, 14, 4, 0.45),
+      inset 0 1px 0 rgba(255, 250, 220, 0.7);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(255, 240, 190, 0.6),
+      0 0 18px rgba(255, 205, 90, 0.75),
+      0 3px 10px rgba(20, 14, 4, 0.45),
+      inset 0 1px 0 rgba(255, 250, 220, 0.7);
+  }
+}
+@media (max-width: 520px) {
+  .farm-links .farm-link {
+    padding: 0.4rem 0.9rem;
+    letter-spacing: 0.12em;
+  }
+}
