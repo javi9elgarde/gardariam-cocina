@@ -3,9 +3,12 @@
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import BookReader, { COVER } from "@/components/BookReader";
+import ProfileSetup from "@/components/ProfileSetup";
 import RecipeDetail from "@/components/RecipeDetail";
 import RecipePanel from "@/components/RecipePanel";
+import RetosZone from "@/components/RetosZone";
 import { useAuth } from "@/lib/auth";
+import { junimoSrc, useProfile } from "@/lib/profile";
 import { getRecipes, onStorageChange, updateRecipe } from "@/lib/storage";
 import { useFavorites } from "@/lib/useFavorites";
 import { CATEGORIES, isBookRecipe, type Recipe } from "@/lib/types";
@@ -33,6 +36,9 @@ function norm(s: string) {
 export default function Home() {
   const { isAdmin, user, loading, signIn, signOutUser } = useAuth();
   const { isFav, toggle: toggleFavorite } = useFavorites();
+  const { profile, loaded: profileLoaded } = useProfile();
+  const [editProfile, setEditProfile] = useState(false);
+  const [showRetos, setShowRetos] = useState(false);
 
   const [rawRecipes, setRawRecipes] = useState<Recipe[]>([]);
   const [editing, setEditing] = useState<Recipe | null | "new">(null);
@@ -95,19 +101,38 @@ export default function Home() {
         <a className="farm-brand" href="https://gardariam.com">
           🏠 Hub
         </a>
-        <div className="farm-links" />
+        <div className="farm-links">
+          <button className="farm-link" onClick={() => setShowRetos(true)}>
+            ⭐ Retos
+          </button>
+        </div>
         <div className="farm-user">
-          {!loading && (
-            <button
-              className="farm-link"
-              onClick={() => (user ? signOutUser() : signIn())}
-              title={user ? (user.email ?? "") : "Iniciar sesión"}
-            >
-              {user ? (isAdmin ? "⚜ Admin" : "Salir") : "Entrar"}
+          {!loading && !user && (
+            <button className="farm-link" onClick={signIn}>
+              Entrar
             </button>
           )}
+          {user && (
+            <>
+              <button
+                className="farm-link"
+                onClick={() => setEditProfile(true)}
+                title="Cambiar nombre y junimo"
+              >
+                {profile?.name ?? "Mi perfil"}
+                {isAdmin ? " ⚜" : ""}
+              </button>
+              <button className="farm-link" onClick={signOutUser}>
+                Salir
+              </button>
+            </>
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="farm-avatar" src="/cocina/mascota-chef.png" alt="" />
+          <img
+            className="farm-avatar"
+            src={user ? junimoSrc(profile?.junimo ?? "verde") : "/cocina/mascota-chef.png"}
+            alt=""
+          />
         </div>
       </nav>
 
@@ -334,6 +359,23 @@ export default function Home() {
             startPage={readerPage}
             onClose={() => setReaderPage(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Perfil: primera vez tras entrar, o al pulsar su nombre */}
+      <AnimatePresence>
+        {user && profileLoaded && (!profile || editProfile) && (
+          <ProfileSetup
+            key="perfil"
+            current={profile}
+            onDone={() => setEditProfile(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showRetos && (
+          <RetosZone key="retos" recipes={recipes} onClose={() => setShowRetos(false)} />
         )}
       </AnimatePresence>
 

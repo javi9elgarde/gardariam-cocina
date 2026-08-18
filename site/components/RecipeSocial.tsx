@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { junimoSrc, useProfile } from "@/lib/profile";
 import { addComment, deleteComment, watchComments, type Comment } from "@/lib/social";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 export default function RecipeSocial({ recipeId }: Props) {
   const { user, isAdmin, signIn } = useAuth();
+  const { profile } = useProfile();
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -22,7 +24,7 @@ export default function RecipeSocial({ recipeId }: Props) {
     setBusy(true);
     setErr(null);
     try {
-      await addComment(recipeId, user, text);
+      await addComment(recipeId, user, text, profile ?? undefined);
       setText("");
     } catch {
       setErr("No se pudo publicar. Inténtalo de nuevo.");
@@ -69,12 +71,8 @@ export default function RecipeSocial({ recipeId }: Props) {
       <ul className="soc-list">
         {comments.map((c) => (
           <li key={c.id} className="soc-item">
-            {c.photo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img className="soc-avatar" src={c.photo} alt="" referrerPolicy="no-referrer" />
-            ) : (
-              <span className="soc-avatar soc-avatar--empty">👤</span>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="soc-avatar" src={junimoSrc(c.junimo ?? "verde")} alt="" />
             <div className="soc-body">
               <b>{c.name}</b>
               <p>{c.text}</p>

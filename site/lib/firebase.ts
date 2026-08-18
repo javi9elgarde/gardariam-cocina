@@ -15,4 +15,4 @@ export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseC
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 
-export const ADMIN_EMAIL = "thejyg35@gmail.com";
+export const ADMIN_EMAILS = ["thejyg35@gmail.com", "mariammoal@gmail.com"];

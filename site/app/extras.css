@@ -548,3 +548,215 @@ textarea.book-input {
   font-size: 0.82rem;
   padding: 0.8rem 0;
 }
+
+/* ===== Perfil (nombre + junimo) ===== */
+.prof-card {
+  position: relative;
+  width: min(520px, 94vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 1.6rem 1.4rem 1.3rem;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #fdf6e4 0%, #f0e2c2 100%);
+  border: 3px solid #9a6a34;
+  box-shadow: 0 26px 62px rgba(30, 18, 8, 0.6);
+  text-align: center;
+}
+.prof-title {
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  color: var(--nogal);
+}
+.prof-sub {
+  font-size: 0.84rem;
+  font-style: italic;
+  color: var(--ink-soft);
+  margin: 0.35rem 0 1rem;
+}
+.prof-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.9rem;
+}
+.prof-preview img {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}
+.prof-preview span {
+  font-family: var(--font-display), serif;
+  font-weight: 700;
+  color: var(--nogal);
+}
+.prof-card .book-label {
+  text-align: left;
+}
+.prof-junimos {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin: 0.5rem 0 1rem;
+}
+.prof-juni {
+  padding: 0.3rem;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: rgba(255, 252, 240, 0.7);
+  cursor: pointer;
+  transition:
+    transform 0.14s,
+    border-color 0.14s;
+}
+.prof-juni img {
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  display: block;
+}
+.prof-juni:hover {
+  transform: translateY(-3px);
+}
+.prof-juni.is-sel {
+  border-color: var(--granate);
+  background: rgba(200, 154, 60, 0.2);
+}
+.prof-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+/* ===== Retos ===== */
+.retos-card {
+  position: relative;
+  width: min(980px, 95vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.4rem 1.4rem;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #fdf6e4 0%, #f0e2c2 100%);
+  border: 3px solid #9a6a34;
+  box-shadow: 0 26px 62px rgba(30, 18, 8, 0.6);
+}
+.retos-head {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px dashed rgba(120, 84, 44, 0.35);
+}
+.retos-juni {
+  width: 62px;
+  height: 62px;
+  image-rendering: pixelated;
+  flex: 0 0 auto;
+}
+.retos-title {
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+  color: var(--nogal);
+}
+.retos-sub {
+  font-size: 0.84rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.retos-progress {
+  margin: 1rem 0;
+  text-align: center;
+}
+.retos-bar {
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(120, 84, 44, 0.18);
+  border: 2px solid #9a6a34;
+  overflow: hidden;
+}
+.retos-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #8a984c, #5f6d31);
+  transition: width 0.4s var(--ease-book);
+}
+.retos-progress p {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-top: 0.35rem;
+}
+.retos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.8rem;
+}
+.reto {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: center;
+}
+.reto-img {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 3px solid #b58a4c;
+  background: #f7eed6;
+  filter: grayscale(0.75) brightness(0.95);
+  transition:
+    filter 0.25s,
+    border-color 0.25s,
+    transform 0.2s;
+}
+.reto-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.reto:hover .reto-img {
+  transform: translateY(-3px);
+}
+.reto.is-done .reto-img {
+  filter: none;
+  border-color: var(--oliva);
+}
+.reto-sello {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-14deg);
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: #9a2f2f;
+  border: 3px solid #9a2f2f;
+  border-radius: 8px;
+  padding: 0.2em 0.5em;
+  background: rgba(255, 250, 235, 0.85);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.reto-name {
+  font-family: var(--font-display), serif;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  color: var(--nogal);
+}
+.retos-win {
+  margin-top: 1rem;
+  text-align: center;
+  font-family: var(--font-display), serif;
+  font-weight: 800;
+  color: var(--naranja);
+}

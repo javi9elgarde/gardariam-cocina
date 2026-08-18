@@ -19,7 +19,7 @@ export interface Comment {
   recipeId: string;
   uid: string;
   name: string;
-  photo: string;
+  junimo?: string;
   text: string;
   createdAt?: { seconds: number } | null;
 }
@@ -51,14 +51,19 @@ export function watchComments(
   );
 }
 
-export async function addComment(recipeId: string, user: User, text: string) {
+export async function addComment(
+  recipeId: string,
+  user: User,
+  text: string,
+  perfil?: { name: string; junimo: string },
+) {
   const clean = text.trim().slice(0, 500);
   if (!clean) return;
   await addDoc(collection(db, "comments"), {
     recipeId,
     uid: user.uid,
-    name: user.displayName ?? "Invitado",
-    photo: user.photoURL ?? "",
+    name: perfil?.name ?? user.displayName ?? "Invitado",
+    junimo: perfil?.junimo ?? "verde",
     text: clean,
     createdAt: serverTimestamp(),
   });
