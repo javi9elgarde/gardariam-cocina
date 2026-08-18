@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import RecipeSocial from "@/components/RecipeSocial";
 import { getRecipeData } from "@/lib/recipes-data";
+import { sfx } from "@/lib/sfx";
 import { useChecklist } from "@/lib/useChecklist";
 import { useProgress } from "@/lib/useProgress";
 import { isBookRecipe, type Recipe } from "@/lib/types";
@@ -100,7 +101,7 @@ export default function RecipeDetail({
                     return (
                       <li key={i}>
                         <label className={`ing-item ${checked ? "is-done" : ""}`}>
-                          <input type="checkbox" checked={checked} onChange={() => toggle(i)} />
+                          <input type="checkbox" checked={checked} onChange={() => { sfx.check(); toggle(i); }} />
                           <span className="ing-box" aria-hidden>
                             {checked ? "✓" : ""}
                           </span>
@@ -137,7 +138,7 @@ export default function RecipeDetail({
                       </div>
                       <button
                         className="ob-check"
-                        onClick={() => toggleStep(i)}
+                        onClick={() => { sfx.check(); toggleStep(i); }}
                         aria-label={d ? "Marcar pendiente" : "Marcar hecho"}
                       >
                         {d ? "✓" : ""}

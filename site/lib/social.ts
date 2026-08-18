@@ -26,14 +26,6 @@ export interface Comment {
   createdAt?: { seconds: number } | null;
 }
 
-export interface GuestPhoto {
-  id: string; // recetaId__uid
-  recipeId: string;
-  uid: string;
-  name: string;
-  url: string;
-}
-
 /* ---------------- Comentarios ---------------- */
 
 export function watchComments(

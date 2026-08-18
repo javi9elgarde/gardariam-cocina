@@ -12,6 +12,7 @@ import {
   recipeIdForPage,
 } from "@/lib/book";
 import IngredientsPanel from "@/components/IngredientsPanel";
+import { sfx } from "@/lib/sfx";
 import { getRecipe } from "@/lib/storage";
 import type { Recipe } from "@/lib/types";
 
@@ -45,6 +46,7 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
 
   const go = useCallback(
     (d: number) => {
+      sfx.pagina();
       setFicha(false);
       setPage((p) => {
         if (p === COVER) return d > 0 ? 0 : COVER; // desde la portada solo se avanza

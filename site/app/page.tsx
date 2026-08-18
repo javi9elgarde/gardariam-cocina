@@ -3,12 +3,14 @@
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import BookReader, { COVER } from "@/components/BookReader";
+import LoadingScreen from "@/components/LoadingScreen";
 import ProfileSetup from "@/components/ProfileSetup";
 import RecipeDetail from "@/components/RecipeDetail";
 import RecipePanel from "@/components/RecipePanel";
 import RetosZone from "@/components/RetosZone";
 import { useAuth } from "@/lib/auth";
 import { junimoSrc, useProfile } from "@/lib/profile";
+import { alternarSonido, sfx, sonidoActivo } from "@/lib/sfx";
 import { getRecipes, onStorageChange, updateRecipe } from "@/lib/storage";
 import { useFavorites } from "@/lib/useFavorites";
 import { CATEGORIES, isBookRecipe, type Recipe } from "@/lib/types";
@@ -40,6 +42,8 @@ export default function Home() {
   const [editProfile, setEditProfile] = useState(false);
   const [showRetos, setShowRetos] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
+  const [sonido, setSonido] = useState(true);
+  useEffect(() => setSonido(sonidoActivo()), []);
 
   const [rawRecipes, setRawRecipes] = useState<Recipe[]>([]);
   const [editing, setEditing] = useState<Recipe | null | "new">(null);
@@ -97,17 +101,26 @@ export default function Home() {
 
   return (
     <div className="farm">
+      <LoadingScreen />
       {/* ---------- Navegación ---------- */}
       <nav className="farm-nav">
         <a className="farm-brand" href="https://gardariam.com">
           🏠 Hub
         </a>
         <div className="farm-links">
-          <button className="farm-link" onClick={() => setShowRetos(true)}>
+          <button className="farm-link" onClick={() => { sfx.abrir(); setShowRetos(true); }}>
             Retos
           </button>
         </div>
         <div className="farm-user">
+          <button
+            className="sound-btn"
+            onClick={() => setSonido(alternarSonido())}
+            title={sonido ? "Silenciar sonidos" : "Activar sonidos"}
+            aria-label={sonido ? "Silenciar sonidos" : "Activar sonidos"}
+          >
+            {sonido ? "🔊" : "🔇"}
+          </button>
           {!loading && !user && (
             <button className="farm-link" onClick={signIn}>
               Entrar
@@ -216,7 +229,7 @@ export default function Home() {
                   {isAdmin ? " · arrastra para reordenar" : " · toca una para abrirla"}
                 </p>
               </div>
-              <button className="openbook-btn" onClick={() => setReaderPage(COVER)}>
+              <button className="openbook-btn" onClick={() => { sfx.pagina(); setReaderPage(COVER); }}>
                 📖 Abrir el Libro
               </button>
             </div>
@@ -235,7 +248,7 @@ export default function Home() {
                   >
                     <button
                       className={`rtile ${isBookRecipe(r) ? "is-book" : "is-new"}`}
-                      onClick={() => setDetail(r)}
+                      onClick={() => { sfx.abrir(); setDetail(r); }}
                     >
                       <span className="rtile-img">
                         {r.iconUrl || r.photoUrl ? (
@@ -243,6 +256,8 @@ export default function Home() {
                           <img
                             src={r.iconUrl || r.photoUrl}
                             alt={r.title}
+                            loading="lazy"
+                            decoding="async"
                             onError={(e) => {
                               // si el icono no existe, usar la foto de la página
                               const img = e.currentTarget;
@@ -288,6 +303,7 @@ export default function Home() {
                         className={`rtile-fav ${r.favorite ? "is-fav" : ""}`}
                         onClick={(e) => {
                           e.stopPropagation();
+                          sfx.favorito();
                           toggleFavorite(r.id);
                         }}
                         onKeyDown={(e) => {

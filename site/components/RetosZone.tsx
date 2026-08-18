@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { junimoSrc, toggleStamp, useProfile, watchMyStamps } from "@/lib/profile";
+import { sfx } from "@/lib/sfx";
 import type { Recipe } from "@/lib/types";
 
 interface Props {
@@ -28,6 +29,7 @@ export default function RetosZone({ recipes, onClose }: Props) {
   async function sellar(r: Recipe) {
     if (!user) return;
     setBusy(r.id);
+    if (!done.includes(r.id)) sfx.sello();
     try {
       await toggleStamp(user.uid, r.id, !done.includes(r.id));
     } catch {
