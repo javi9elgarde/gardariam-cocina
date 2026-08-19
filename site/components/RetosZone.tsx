@@ -12,7 +12,6 @@ import {
   useProfile,
   watchMyStamps,
 } from "@/lib/profile";
-import { watchMyProof, type Prueba } from "@/lib/social";
 import { sfx } from "@/lib/sfx";
 import type { Recipe } from "@/lib/types";
 
@@ -28,24 +27,16 @@ export default function RetosZone({ recipes, onClose }: Props) {
   const { user, signIn } = useAuth();
   const { profile, save } = useProfile();
   const [done, setDone] = useState<string[]>([]);
-  const [pruebas, setPruebas] = useState<Record<string, Prueba>>({});
   const [busy, setBusy] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
   const [fiesta, setFiesta] = useState(false);
   const celebrado = useRef(false);
 
   useEffect(() => {
     if (!user) {
       setDone([]);
-      setPruebas({});
       return;
     }
-    const a = watchMyStamps(user.uid, setDone);
-    const b = watchMyProof(user.uid, setPruebas);
-    return () => {
-      a();
-      b();
-    };
+    return watchMyStamps(user.uid, setDone);
   }, [user]);
 
   const total = recipes.length;
@@ -64,23 +55,9 @@ export default function RetosZone({ recipes, onClose }: Props) {
     sfx.fanfarria();
   }, [completo, user]);
 
-  function queFalta(id: string): string | null {
-    const p = pruebas[id];
-    if (p?.comentario && p?.foto) return null;
-    if (!p?.foto && !p?.comentario) return "Sube una foto y deja un comentario en la receta";
-    if (!p?.foto) return "Te falta subir tu foto en la receta";
-    return "Te falta dejar tu comentario en la receta";
-  }
-
   async function sellar(r: Recipe) {
     if (!user) return;
     const quitar = done.includes(r.id);
-    const falta = queFalta(r.id);
-    if (!quitar && falta) {
-      setAviso(`${r.title}: ${falta}.`);
-      return;
-    }
-    setAviso(null);
     setBusy(r.id);
     if (!quitar) sfx.sello();
     try {
@@ -163,27 +140,16 @@ export default function RetosZone({ recipes, onClose }: Props) {
               </p>
             </div>
 
-            <p className="retos-reglas">
-              Para sellar una receta hay que <b>subir tu foto</b> y <b>dejar un comentario</b> en
-              ella. Así el sello vale de verdad 😉
-            </p>
-
-            {aviso && <p className="retos-aviso">⚠️ {aviso}</p>}
-
             <ul className="retos-grid">
               {recipes.map((r) => {
                 const hecha = done.includes(r.id);
-                const falta = queFalta(r.id);
-                const p = pruebas[r.id];
                 return (
                   <li key={r.id}>
                     <button
-                      className={`reto ${hecha ? "is-done" : ""} ${
-                        !hecha && falta ? "is-locked" : ""
-                      }`}
+                      className={`reto ${hecha ? "is-done" : ""}`}
                       onClick={() => sellar(r)}
                       disabled={busy === r.id}
-                      title={hecha ? "Quitar el sello" : (falta ?? "Sellar esta receta")}
+                      title={hecha ? "Quitar el sello" : "Sellar esta receta"}
                     >
                       <span className="reto-img">
                         {r.iconUrl || r.photoUrl ? (
@@ -193,15 +159,8 @@ export default function RetosZone({ recipes, onClose }: Props) {
                           <span className="rtile-empty">🍲</span>
                         )}
                         {hecha && <span className="reto-sello">✓ HECHA</span>}
-                        {!hecha && falta && <span className="reto-lock">🔒</span>}
                       </span>
                       <span className="reto-name">{r.title}</span>
-                      {!hecha && (
-                        <span className="reto-prueba">
-                          <i className={p?.foto ? "ok" : ""}>📷</i>
-                          <i className={p?.comentario ? "ok" : ""}>💬</i>
-                        </span>
-                      )}
                     </button>
                   </li>
                 );
