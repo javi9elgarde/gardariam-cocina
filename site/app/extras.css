@@ -596,7 +596,7 @@ textarea.book-input {
 }
 .prof-junimos {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 0.5rem;
   margin: 0.5rem 0 1rem;
 }
@@ -1046,44 +1046,71 @@ textarea.book-input {
   .reader-pageinfo { font-size: 0.74rem; }
 }
 
-/* ===== Recompensa: junimo dorado ===== */
-.retos-premio {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+/* ===== Junimos de recompensa (lista en Retos) ===== */
+.premios {
   margin: 0.9rem 0;
   padding: 0.7rem 0.85rem;
   border-radius: 12px;
   border: 2px dashed #c89a3c;
   background: linear-gradient(135deg, rgba(255, 245, 214, 0.9), rgba(246, 226, 176, 0.85));
 }
-.retos-premio img {
-  width: 54px;
-  height: 54px;
+.premios-title {
+  font-family: var(--font-display), serif;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--granate);
+  margin-bottom: 0.5rem;
+}
+.premios-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem 0.9rem;
+}
+.premio {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.premio-img {
+  position: relative;
   flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+}
+.premio-img img {
+  width: 100%;
+  height: 100%;
   image-rendering: pixelated;
-  filter: grayscale(0.9) opacity(0.55);
+  filter: grayscale(0.95) opacity(0.45);
   transition: filter 0.3s;
 }
-.retos-premio.is-won img {
+.premio.is-won .premio-img img {
   filter: none;
   animation: oro-brillo 2.4s ease-in-out infinite;
 }
-.retos-premio b {
+.premio-lock {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+.premio-txt {
+  min-width: 0;
+}
+.premio-txt b {
+  display: block;
   font-family: var(--font-display), serif;
+  font-size: 0.8rem;
   color: var(--nogal);
-  font-size: 0.92rem;
 }
-.retos-premio p {
-  margin: 0.15rem 0 0;
-  font-size: 0.76rem;
-  line-height: 1.35;
+.premio-txt i {
+  display: block;
+  font-style: normal;
+  font-size: 0.7rem;
+  line-height: 1.3;
   color: #6b5636;
-}
-.retos-premio.is-won {
-  border-style: solid;
-  border-color: #e0b242;
-  box-shadow: 0 0 0 2px rgba(224, 178, 66, 0.35);
 }
 @keyframes oro-brillo {
   0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 210, 90, 0)); }
@@ -1116,10 +1143,13 @@ textarea.book-input {
 }
 .prof-oro-hint {
   margin: -0.6rem 0 1rem;
-  font-size: 0.72rem;
-  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  line-height: 1.35;
   color: #6b5636;
-  text-align: center;
+  text-align: left;
 }
 
 /* ===== Fiesta final: fuegos artificiales + ventana ===== */
@@ -1181,7 +1211,7 @@ textarea.book-input {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .retos-premio.is-won img,
+  .premio.is-won .premio-img img,
   .prof-juni-oro:not(.is-locked) img,
   .fiesta-juni {
     animation: none;

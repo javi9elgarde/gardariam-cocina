@@ -1,6 +1,8 @@
 "use client";
 
+import type { User } from "firebase/auth";
 import {
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -29,26 +31,86 @@ export const JUNIMOS = [
 
 export type Junimo = (typeof JUNIMOS)[number];
 
-/** Recompensa: no se puede elegir, se desbloquea sellando todo el libro */
-export const JUNIMO_DORADO = "dorado";
+/* ---------------- Junimos de recompensa ---------------- */
+
+/** Junimos que no se eligen: hay que ganárselos */
+export const LOGROS = {
+  bronce: {
+    nombre: "Junimo de bronce",
+    pista: "Sella 5 recetas del libro",
+  },
+  plata: {
+    nombre: "Junimo de plata",
+    pista: "Sella 10 recetas del libro",
+  },
+  dorado: {
+    nombre: "Junimo dorado",
+    pista: "Sella todas las recetas del libro",
+  },
+  boda: {
+    nombre: "Junimo de boda",
+    pista: "Solo para quien se registre entre el 29 de agosto y el 1 de septiembre de 2026",
+  },
+} as const;
+
+export type Logro = keyof typeof LOGROS;
+export const ORDEN_LOGROS: Logro[] = ["bronce", "plata", "dorado", "boda"];
+
+/** Compatibilidad: antes solo existía el dorado */
+export const JUNIMO_DORADO: Logro = "dorado";
 
 /** ¿este junimo hay que desbloquearlo? */
 export function esBloqueado(j: string): boolean {
-  return j === JUNIMO_DORADO;
+  return j in LOGROS;
+}
+
+/* Ventana de la boda (hora de España, UTC+2 en verano) */
+const BODA_DESDE = Date.parse("2026-08-29T00:00:00+02:00");
+const BODA_HASTA = Date.parse("2026-09-01T23:59:59+02:00");
+
+/**
+ * El junimo de boda se deduce de la fecha en que se creó la cuenta de Google,
+ * que la pone Firebase y el usuario no puede tocar. Por eso no hace falta
+ * guardarlo: no se puede hacer trampa con él.
+ */
+export function esInvitadoDeBoda(user: User | null): boolean {
+  const t = user?.metadata?.creationTime;
+  if (!t) return false;
+  const ms = Date.parse(t);
+  return !Number.isNaN(ms) && ms >= BODA_DESDE && ms <= BODA_HASTA;
+}
+
+/** Logros que un usuario ya tiene ganados */
+export function logrosDe(profile: Profile | null, user: User | null): Set<Logro> {
+  const s = new Set<Logro>((profile?.logros ?? []).filter((l): l is Logro => l in LOGROS));
+  if (profile?.dorado) s.add("dorado"); // perfiles guardados antes de haber varios logros
+  if (esInvitadoDeBoda(user)) s.add("boda");
+  return s;
+}
+
+/** Logros que corresponden por número de recetas selladas */
+export function logrosPorRetos(hechas: number, total: number): Logro[] {
+  const out: Logro[] = [];
+  if (hechas >= 5) out.push("bronce");
+  if (hechas >= 10) out.push("plata");
+  if (total > 0 && hechas >= total) out.push("dorado");
+  return out;
 }
 
 export interface Profile {
   name: string;
   junimo: string;
-  /** true cuando ha sellado todas las recetas del libro */
+  /** junimos de recompensa ya ganados */
+  logros?: string[];
+  /** antiguo: true cuando había sellado todas las recetas */
   dorado?: boolean;
 }
 
 /** Se sube al cambiar los dibujos, para que nadie se quede con la versión antigua en caché */
-const JUNIMO_VER = "3";
+const JUNIMO_VER = "4";
 
 export function junimoSrc(j: string): string {
-  const color = j === JUNIMO_DORADO || JUNIMOS.includes(j as Junimo) ? j : "verde";
+  const color = esBloqueado(j) || JUNIMOS.includes(j as Junimo) ? j : "verde";
   return `/cocina/junimos/${color}.png?v=${JUNIMO_VER}`;
 }
 
@@ -79,15 +141,18 @@ export function useProfile() {
   async function save(p: Profile) {
     if (!user) return;
     const name = p.name.trim().slice(0, 24);
-    // el dorado solo se puede llevar si está desbloqueado
-    const dorado = p.dorado ?? profile?.dorado ?? false;
-    const junimo = p.junimo === JUNIMO_DORADO && !dorado ? "verde" : p.junimo;
-    await setDoc(doc(db, "profiles", user.uid), {
-      name,
-      junimo,
-      dorado,
-      uid: user.uid,
-    });
+    const ganados = logrosDe({ ...(profile ?? { name: "", junimo: "verde" }), ...p }, user);
+    // un junimo de recompensa solo se puede llevar si está desbloqueado
+    const junimo = esBloqueado(p.junimo) && !ganados.has(p.junimo as Logro) ? "verde" : p.junimo;
+    await setDoc(
+      doc(db, "profiles", user.uid),
+      {
+        name,
+        junimo,
+        uid: user.uid,
+      },
+      { merge: true },
+    );
     // el nombre y el junimo nuevos se aplican también a lo ya publicado
     await renameEverywhere(user.uid, name, junimo);
   }
@@ -141,7 +206,15 @@ export async function toggleStamp(uid: string, recipeId: string, on: boolean) {
   }
 }
 
-/** Marca el logro en el perfil para que el dorado no se pierda */
-export async function desbloquearDorado(uid: string) {
-  await setDoc(doc(db, "profiles", uid), { dorado: true }, { merge: true });
+/** Guarda los logros ganados para que no se pierdan si luego quita un sello */
+export async function desbloquearLogros(uid: string, ids: Logro[]) {
+  if (ids.length === 0) return;
+  await setDoc(
+    doc(db, "profiles", uid),
+    {
+      logros: arrayUnion(...ids),
+      ...(ids.includes("dorado") ? { dorado: true } : {}),
+    },
+    { merge: true },
+  );
 }

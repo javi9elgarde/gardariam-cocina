@@ -5,12 +5,16 @@ import { useEffect, useRef, useState } from "react";
 import Fireworks from "@/components/Fireworks";
 import { useAuth } from "@/lib/auth";
 import {
-  JUNIMO_DORADO,
-  desbloquearDorado,
+  LOGROS,
+  ORDEN_LOGROS,
+  desbloquearLogros,
   junimoSrc,
+  logrosDe,
+  logrosPorRetos,
   toggleStamp,
   useProfile,
   watchMyStamps,
+  type Logro,
 } from "@/lib/profile";
 import { sfx } from "@/lib/sfx";
 import type { Recipe } from "@/lib/types";
@@ -20,16 +24,35 @@ interface Props {
   onClose: () => void;
 }
 
-/** para no repetir la fiesta cada vez que se abre la ventana */
-const YA_CELEBRADO = "gardariam_dorado_celebrado";
+/** logros ya celebrados en este dispositivo, para no repetir la fiesta */
+const CELEBRADOS = "gardariam_logros_celebrados";
+
+function yaCelebrado(uid: string, logro: Logro): boolean {
+  try {
+    const m = JSON.parse(localStorage.getItem(CELEBRADOS) ?? "{}");
+    return Array.isArray(m[uid]) && m[uid].includes(logro);
+  } catch {
+    return false;
+  }
+}
+
+function marcarCelebrado(uid: string, logro: Logro) {
+  try {
+    const m = JSON.parse(localStorage.getItem(CELEBRADOS) ?? "{}");
+    m[uid] = [...new Set([...(m[uid] ?? []), logro])];
+    localStorage.setItem(CELEBRADOS, JSON.stringify(m));
+  } catch {
+    /* sin localStorage se celebra otra vez, no pasa nada */
+  }
+}
 
 export default function RetosZone({ recipes, onClose }: Props) {
   const { user, signIn } = useAuth();
   const { profile, save } = useProfile();
   const [done, setDone] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
-  const [fiesta, setFiesta] = useState(false);
-  const celebrado = useRef(false);
+  const [fiesta, setFiesta] = useState<Logro | null>(null);
+  const guardando = useRef(false);
 
   useEffect(() => {
     if (!user) {
@@ -44,16 +67,32 @@ export default function RetosZone({ recipes, onClose }: Props) {
   const pct = total ? Math.round((hechas / total) * 100) : 0;
   const completo = total > 0 && hechas === total;
 
-  /* Al completarlo todo: desbloquear el dorado y montar la fiesta (una vez) */
+  const ganados = logrosDe(profile, user);
+
+  /* Al llegar a 5, 10 o todas: se guarda el logro y se celebra (una sola vez) */
   useEffect(() => {
-    if (!user || !completo || celebrado.current) return;
-    celebrado.current = true;
-    void desbloquearDorado(user.uid).catch(() => {});
-    if (localStorage.getItem(YA_CELEBRADO) === user.uid) return;
-    localStorage.setItem(YA_CELEBRADO, user.uid);
-    setFiesta(true);
-    sfx.fanfarria();
-  }, [completo, user]);
+    if (!user || guardando.current) return;
+    // se recalcula aquí dentro: `ganados` es un Set nuevo en cada render
+    const tiene = logrosDe(profile, user);
+    const nuevos = logrosPorRetos(hechas, total).filter((l) => !tiene.has(l));
+    if (nuevos.length === 0) return;
+
+    guardando.current = true;
+    void desbloquearLogros(user.uid, nuevos)
+      .catch(() => {})
+      .finally(() => {
+        guardando.current = false;
+      });
+
+    // se celebra el mejor de los nuevos
+    const mejor = nuevos[nuevos.length - 1];
+    if (!yaCelebrado(user.uid, mejor)) {
+      marcarCelebrado(user.uid, mejor);
+      setFiesta(mejor);
+      if (mejor === "dorado") sfx.fanfarria();
+      else sfx.sello();
+    }
+  }, [hechas, total, user, profile]);
 
   async function sellar(r: Recipe) {
     if (!user) return;
@@ -68,10 +107,10 @@ export default function RetosZone({ recipes, onClose }: Props) {
     setBusy(null);
   }
 
-  async function ponerseDorado() {
+  async function ponerse(l: Logro) {
     if (!profile) return;
-    await save({ name: profile.name, junimo: JUNIMO_DORADO, dorado: true });
-    setFiesta(false);
+    await save({ ...profile, junimo: l });
+    setFiesta(null);
   }
 
   return (
@@ -109,18 +148,27 @@ export default function RetosZone({ recipes, onClose }: Props) {
           </div>
         </header>
 
-        {/* La recompensa, siempre visible arriba */}
-        <div className={`retos-premio ${profile?.dorado ? "is-won" : ""}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={junimoSrc(JUNIMO_DORADO)} alt="" />
-          <div>
-            <b>Junimo dorado</b>
-            <p>
-              {profile?.dorado
-                ? "¡Desbloqueado! Ya puedes llevarlo en tu perfil."
-                : "Completa todos los retos del libro y lo desbloquearás para tu perfil."}
-            </p>
-          </div>
+        {/* Junimos que se pueden ganar */}
+        <div className="premios">
+          <p className="premios-title">Junimos de recompensa</p>
+          <ul className="premios-list">
+            {ORDEN_LOGROS.map((l) => {
+              const tengo = ganados.has(l);
+              return (
+                <li key={l} className={`premio ${tengo ? "is-won" : ""}`}>
+                  <span className="premio-img">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={junimoSrc(l)} alt="" />
+                    {!tengo && <span className="premio-lock">🔒</span>}
+                  </span>
+                  <span className="premio-txt">
+                    <b>{LOGROS[l].nombre}</b>
+                    <i>{tengo ? "¡Desbloqueado! Ya puedes llevarlo." : LOGROS[l].pista}</i>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
 
         {!user ? (
@@ -182,7 +230,7 @@ export default function RetosZone({ recipes, onClose }: Props) {
             className="fiesta-overlay"
             onClick={(e) => e.stopPropagation()}
           >
-            <Fireworks />
+            {fiesta === "dorado" && <Fireworks />}
             <motion.div
               className="fiesta-card"
               initial={{ scale: 0.7, opacity: 0 }}
@@ -190,16 +238,25 @@ export default function RetosZone({ recipes, onClose }: Props) {
               transition={{ type: "spring", stiffness: 220, damping: 18 }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="fiesta-juni" src={junimoSrc(JUNIMO_DORADO)} alt="" />
-              <h2>¡Libro completado!</h2>
+              <img className="fiesta-juni" src={junimoSrc(fiesta)} alt="" />
+              <h2>{fiesta === "dorado" ? "¡Libro completado!" : "¡Nuevo junimo!"}</h2>
               <p>
-                Has cocinado todas las recetas del libro y desbloqueado el <b>Junimo Dorado</b>.
+                {fiesta === "dorado" ? (
+                  <>
+                    Has cocinado todas las recetas del libro y desbloqueado el{" "}
+                    <b>{LOGROS.dorado.nombre}</b>.
+                  </>
+                ) : (
+                  <>
+                    Has desbloqueado el <b>{LOGROS[fiesta].nombre}</b>.
+                  </>
+                )}
               </p>
               <div className="fiesta-actions">
-                <button className="book-btn" onClick={ponerseDorado}>
+                <button className="book-btn" onClick={() => ponerse(fiesta)}>
                   ✨ Ponérmelo ahora
                 </button>
-                <button className="book-btn book-btn-ghost" onClick={() => setFiesta(false)}>
+                <button className="book-btn book-btn-ghost" onClick={() => setFiesta(null)}>
                   Más tarde
                 </button>
               </div>
