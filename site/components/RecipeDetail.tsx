@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import RecipeSocial from "@/components/RecipeSocial";
-import { getRecipeData } from "@/lib/recipes-data";
+import { contenidoDe, lineaIngrediente } from "@/lib/recipe-content";
 import { sfx } from "@/lib/sfx";
 import { useChecklist } from "@/lib/useChecklist";
 import { useProgress } from "@/lib/useProgress";
@@ -26,18 +26,10 @@ export default function RecipeDetail({
   onToggleFav,
   onClose,
 }: Props) {
-  const data = getRecipeData(recipe.id);
+  const data = contenidoDe(recipe);
 
-  const ingredients: string[] =
-    data?.ingredients?.map((i) =>
-      [i.qty, i.name, i.note ? `(${i.note})` : ""].filter(Boolean).join(" "),
-    ) ??
-    recipe.ingredients2 ??
-    [];
-
-  const steps: { title?: string; text: string }[] =
-    data?.steps?.map((s) => ({ title: s.title, text: s.text })) ??
-    (recipe.steps2 ?? []).map((t) => ({ text: t }));
+  const ingredients: string[] = data.ingredients.map(lineaIngrediente);
+  const steps: { title?: string; text: string }[] = data.steps;
 
   const { done, toggle, clear } = useChecklist("gardariam_cocina_ingredientes_v1", recipe.id);
   const { done: stepsDone, toggle: toggleStep } = useProgress(recipe.id);
@@ -77,8 +69,8 @@ export default function RecipeDetail({
             <div className="rd-stars">
               {"★".repeat(Math.max(1, Math.min(5, recipe.rating || 5)))}
             </div>
-            {(data?.story || recipe.description) && (
-              <p className="rd-story">{data?.story ?? recipe.description}</p>
+            {data.story && (
+              <p className="rd-story">{data.story}</p>
             )}
           </div>
         </header>
@@ -148,7 +140,7 @@ export default function RecipeDetail({
                 })}
               </ol>
             )}
-            {data?.tip && (
+            {data.tip && (
               <aside className="ob-tip">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/cocina/mascota-chef.png" alt="" className="ob-tip-mascot" />
@@ -178,7 +170,7 @@ export default function RecipeDetail({
               </div>
               <div>
                 <dt>Dificultad</dt>
-                <dd>{data?.difficulty ?? "—"}</dd>
+                <dd>{data.difficulty ?? "—"}</dd>
               </div>
               {inBook && recipe.bookPage !== undefined && (
                 <div>
@@ -188,7 +180,7 @@ export default function RecipeDetail({
               )}
             </dl>
 
-            {data?.note && <p className="ob-note mt-2">{data.note}</p>}
+            {data.note && <p className="ob-note mt-2">{data.note}</p>}
 
             <div className="rd-actions">
               <button className="book-btn book-btn-ghost" onClick={onToggleFav}>

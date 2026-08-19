@@ -1,3 +1,5 @@
+import type { RecipeData } from "./recipes-data";
+
 export interface Recipe {
   id: string;
   title: string;
@@ -15,6 +17,9 @@ export interface Recipe {
    *  Se usa `sortIndex` y no `order` porque en Firestore quedó guardado
    *  un `order` antiguo (alfabético) que pisaba el orden del libro. */
   sortIndex?: number;
+  /** Contenido editable por el admin (historia, ingredientes, pasos, consejo…).
+   *  Si falta, se usa el transcrito del libro en recipes-data.ts. */
+  contenido?: RecipeData;
   /** recetas nuevas (fuera del libro) */
   description?: string;
   ingredients2?: string[];

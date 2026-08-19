@@ -41,6 +41,23 @@ function initFirestoreSync(): void {
 
 initFirestoreSync();
 
+/**
+ * Firestore rechaza los valores `undefined`. Al editar, un campo vacío llega
+ * como undefined, así que se quita antes de guardar (y con `merge: true` el
+ * valor anterior se conserva; para borrarlo de verdad se manda "" o []).
+ */
+function limpiar<T>(v: T): T {
+  if (Array.isArray(v)) return v.map(limpiar) as unknown as T;
+  if (v && typeof v === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      if (val !== undefined) out[k] = limpiar(val);
+    }
+    return out as T;
+  }
+  return v;
+}
+
 export function getRecipes(): Recipe[] {
   // seed del libro + Firestore; se fusiona por campos (Firestore manda)
   const ids = new Set([...Object.keys(seedMap), ...Object.keys(recipesCache)]);
@@ -66,7 +83,7 @@ export function addRecipe(recipe: Omit<Recipe, "id">): string {
   const id = doc(collection(db, "recipes")).id;
   recipesCache = { ...recipesCache, [id]: { id, ...recipe } };
   notify();
-  void setDoc(doc(db, "recipes", id), recipe);
+  void setDoc(doc(db, "recipes", id), limpiar(recipe));
   return id;
 }
 
@@ -75,7 +92,7 @@ export function updateRecipe(id: string, patch: Partial<Omit<Recipe, "id">>): vo
   if (!current) return;
   recipesCache = { ...recipesCache, [id]: { ...current, ...patch, id } };
   notify();
-  void setDoc(doc(db, "recipes", id), patch, { merge: true });
+  void setDoc(doc(db, "recipes", id), limpiar(patch), { merge: true });
 }
 
 export function deleteRecipe(id: string): void {

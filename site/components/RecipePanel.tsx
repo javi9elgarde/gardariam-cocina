@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
-import ListBuilder from "@/components/ListBuilder";
+import FieldRows from "@/components/FieldRows";
 import { BOOK_PAGES } from "@/lib/book";
+import { contenidoDe } from "@/lib/recipe-content";
+import type { Ingredient, Step } from "@/lib/recipes-data";
 import { addRecipe, deleteRecipe, updateRecipe } from "@/lib/storage";
 import { CATEGORIES, EMPTY_RECIPE, type Recipe } from "@/lib/types";
 
@@ -13,7 +15,12 @@ interface RecipePanelProps {
   onClose: () => void;
 }
 
+const DIFICULTADES = ["Fácil", "Media", "Alta"] as const;
+
 export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelProps) {
+  // el contenido se precarga ya resuelto: el admin ve lo que hay ahora y lo edita
+  const inicial = recipe ? contenidoDe(recipe) : null;
+
   const [draft, setDraft] = useState<Omit<Recipe, "id">>(
     recipe
       ? {
@@ -27,11 +34,23 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
           prepMinutes: recipe.prepMinutes,
           persons: recipe.persons ?? 2,
           favorite: recipe.favorite ?? false,
+          sortIndex: recipe.sortIndex,
           description: recipe.description ?? "",
           ingredients2: recipe.ingredients2 ?? [],
           steps2: recipe.steps2 ?? [],
+          contenido: {
+            story: inicial?.story ?? "",
+            note: inicial?.note ?? "",
+            difficulty: inicial?.difficulty,
+            tip: inicial?.tip ?? "",
+            ingredients: inicial?.ingredients ?? [],
+            steps: inicial?.steps ?? [],
+          },
         }
-      : EMPTY_RECIPE,
+      : {
+          ...EMPTY_RECIPE,
+          contenido: { story: "", note: "", tip: "", ingredients: [], steps: [] },
+        },
   );
 
   const inBook = draft.bookPage !== undefined;
@@ -40,9 +59,26 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
     setDraft((d) => ({ ...d, [k]: v }));
   }
 
+  function setCont<K extends keyof NonNullable<Recipe["contenido"]>>(
+    k: K,
+    v: NonNullable<Recipe["contenido"]>[K],
+  ) {
+    setDraft((d) => ({ ...d, contenido: { ...d.contenido, [k]: v } }));
+  }
+
   function save() {
-    if (recipe) updateRecipe(recipe.id, draft);
-    else addRecipe(draft);
+    const c = draft.contenido ?? {};
+    const limpio: Omit<Recipe, "id"> = {
+      ...draft,
+      pages: (draft.pages ?? []).map((u) => u.trim()).filter(Boolean),
+      contenido: {
+        ...c,
+        ingredients: (c.ingredients ?? []).filter((i) => i.name?.trim()),
+        steps: (c.steps ?? []).filter((st) => st.text?.trim()),
+      },
+    };
+    if (recipe) updateRecipe(recipe.id, limpio);
+    else addRecipe(limpio);
     onClose();
   }
 
@@ -52,6 +88,8 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
   }
 
   if (!isAdmin) return null;
+
+  const cont = draft.contenido ?? {};
 
   return (
     <motion.div
@@ -78,7 +116,9 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
             {recipe ? "✎ Editar receta" : "＋ Nueva receta"}
           </h3>
 
-          {/* ---- Identidad ---- */}
+          {/* ---------- Identidad ---------- */}
+          <p className="form-group">Ficha</p>
+
           <label className="book-label">Nombre que aparece</label>
           <input
             className="book-input"
@@ -101,7 +141,6 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
             ))}
           </select>
 
-          {/* ---- Icono 1:1 ---- */}
           <label className="book-label">Icono cuadrado (1:1) de la cuadrícula</label>
           <div className="icon-row">
             <div className="icon-prev">
@@ -116,11 +155,18 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
               className="book-input"
               value={draft.iconUrl ?? ""}
               onChange={(e) => set("iconUrl", e.target.value)}
-              placeholder="/cocina/iconos/mi-receta.png"
+              placeholder="/cocina/iconos/mi-receta.jpg"
             />
           </div>
 
-          {/* ---- Datos ---- */}
+          <label className="book-label">Foto grande (se usa si no hay icono)</label>
+          <input
+            className="book-input"
+            value={draft.photoUrl}
+            onChange={(e) => set("photoUrl", e.target.value)}
+            placeholder="/cocina/paginas/mi-receta-card.jpg"
+          />
+
           <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="book-label">Minutos</label>
@@ -159,7 +205,53 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
             </div>
           </div>
 
-          {/* ---- ¿Del libro o nueva? ---- */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="book-label">Dificultad</label>
+              <select
+                className="book-input"
+                value={cont.difficulty ?? ""}
+                onChange={(e) =>
+                  setCont(
+                    "difficulty",
+                    (e.target.value || undefined) as (typeof DIFICULTADES)[number] | undefined,
+                  )
+                }
+              >
+                <option value="">— Sin indicar —</option>
+                {DIFICULTADES.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="book-label">Posición en la cuadrícula</label>
+              <input
+                className="book-input"
+                type="number"
+                value={draft.sortIndex ?? ""}
+                placeholder="(se ordena arrastrando)"
+                onChange={(e) =>
+                  set("sortIndex", e.target.value === "" ? undefined : Number(e.target.value))
+                }
+              />
+            </div>
+          </div>
+
+          <label className="book-toggle-line">
+            <input
+              type="checkbox"
+              checked={draft.favorite}
+              onChange={(e) => set("favorite", e.target.checked)}
+            />{" "}
+            ⭐ Marcada como favorita
+          </label>
+
+          {/* ---------- Libro ---------- */}
+          <p className="form-group">Libro</p>
+
           <div className="book-toggle">
             <label>
               <input
@@ -184,39 +276,71 @@ export default function RecipePanel({ recipe, isAdmin, onClose }: RecipePanelPro
             )}
           </div>
 
-          {/* ---- Receta nueva (sin libro) ---- */}
-          {!inBook && (
-            <>
-              <label className="book-label">Descripción / historia</label>
-              <textarea
-                className="book-input"
-                rows={3}
-                value={draft.description ?? ""}
-                onChange={(e) => set("description", e.target.value)}
-                placeholder="Una receta que nos encanta porque..."
-              />
-              <label className="book-label">Foto grande (URL)</label>
-              <input
-                className="book-input"
-                value={draft.photoUrl}
-                onChange={(e) => set("photoUrl", e.target.value)}
-                placeholder="https://..."
-              />
-              <ListBuilder
-                label="Ingredientes"
-                items={draft.ingredients2 ?? []}
-                onChange={(v) => set("ingredients2", v)}
-                placeholder="Ej: 350 g de carne picada"
-              />
-              <ListBuilder
-                label="Pasos"
-                items={draft.steps2 ?? []}
-                onChange={(v) => set("steps2", v)}
-                numbered
-                placeholder="Siguiente paso..."
-              />
-            </>
-          )}
+          <FieldRows<{ url: string }>
+            label="Páginas ilustradas de la receta"
+            ayuda="Imágenes que se ven al abrir la receta. Ej: /cocina/paginas/paella-0.jpg"
+            items={(draft.pages ?? []).map((url) => ({ url }))}
+            columnas={[{ clave: "url", etiqueta: "/cocina/paginas/…" }]}
+            nuevo={() => ({ url: "" })}
+            numerado
+            onChange={(v) => set("pages", v.map((p) => p.url))}
+          />
+
+          {/* ---------- Contenido ---------- */}
+          <p className="form-group">Contenido de la receta</p>
+
+          <label className="book-label">Historia / introducción</label>
+          <textarea
+            className="book-input"
+            rows={4}
+            value={cont.story ?? ""}
+            onChange={(e) => setCont("story", e.target.value)}
+            placeholder="Una receta que nos encanta porque..."
+          />
+
+          <FieldRows<Ingredient>
+            label="Ingredientes"
+            ayuda="Cantidad + nombre + una nota opcional entre paréntesis."
+            items={cont.ingredients ?? []}
+            columnas={[
+              { clave: "qty", etiqueta: "500 g", peso: 1 },
+              { clave: "name", etiqueta: "Harina de fuerza", peso: 3 },
+              { clave: "note", etiqueta: "nota (opcional)", peso: 2 },
+            ]}
+            nuevo={() => ({ name: "" })}
+            onChange={(v) => setCont("ingredients", v)}
+          />
+
+          <FieldRows<Step>
+            label="Pasos de la elaboración"
+            ayuda="El título es opcional; si lo dejas vacío solo se ve el texto."
+            items={cont.steps ?? []}
+            columnas={[
+              { clave: "title", etiqueta: "Título del paso", peso: 1 },
+              { clave: "text", etiqueta: "Qué hay que hacer…", peso: 3, multilinea: true },
+            ]}
+            nuevo={() => ({ text: "" })}
+            numerado
+            onChange={(v) => setCont("steps", v)}
+          />
+
+          <label className="book-label">Consejo del granjero</label>
+          <textarea
+            className="book-input"
+            rows={2}
+            value={cont.tip ?? ""}
+            onChange={(e) => setCont("tip", e.target.value)}
+            placeholder="El truco que no puede faltar..."
+          />
+
+          <label className="book-label">Nota al margen</label>
+          <textarea
+            className="book-input"
+            rows={2}
+            value={cont.note ?? ""}
+            onChange={(e) => setCont("note", e.target.value)}
+            placeholder="Apunte a mano en el margen de la página"
+          />
 
           <div className="mt-3 flex gap-2">
             <button className="book-btn flex-1" onClick={save}>

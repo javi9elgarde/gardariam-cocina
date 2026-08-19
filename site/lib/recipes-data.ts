@@ -13,7 +13,7 @@ export interface Ingredient {
 }
 
 export interface Step {
-  title: string;
+  title?: string;
   text: string;
 }
 
