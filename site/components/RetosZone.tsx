@@ -10,7 +10,9 @@ import {
   desbloquearLogros,
   junimoSrc,
   logrosDe,
+  esBloqueado,
   logrosPorRetos,
+  reiniciarRetos,
   toggleStamp,
   useProfile,
   watchMyStamps,
@@ -36,6 +38,16 @@ function yaCelebrado(uid: string, logro: Logro): boolean {
   }
 }
 
+function olvidarCelebrados(uid: string) {
+  try {
+    const m = JSON.parse(localStorage.getItem(CELEBRADOS) ?? "{}");
+    delete m[uid];
+    localStorage.setItem(CELEBRADOS, JSON.stringify(m));
+  } catch {
+    /* nada que limpiar */
+  }
+}
+
 function marcarCelebrado(uid: string, logro: Logro) {
   try {
     const m = JSON.parse(localStorage.getItem(CELEBRADOS) ?? "{}");
@@ -47,11 +59,12 @@ function marcarCelebrado(uid: string, logro: Logro) {
 }
 
 export default function RetosZone({ recipes, onClose }: Props) {
-  const { user, signIn } = useAuth();
+  const { user, signIn, isAdmin } = useAuth();
   const { profile, save } = useProfile();
   const [done, setDone] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [fiesta, setFiesta] = useState<Logro | null>(null);
+  const [reiniciando, setReiniciando] = useState(false);
   const guardando = useRef(false);
 
   useEffect(() => {
@@ -105,6 +118,23 @@ export default function RetosZone({ recipes, onClose }: Props) {
       /* la regla puede rechazarlo */
     }
     setBusy(null);
+  }
+
+  async function reiniciar() {
+    if (!user) return;
+    setReiniciando(true);
+    try {
+      await reiniciarRetos(user.uid);
+      olvidarCelebrados(user.uid);
+      // si llevaba puesto un junimo de recompensa, vuelve al verde
+      if (profile && esBloqueado(profile.junimo) && profile.junimo !== "boda") {
+        await save({ ...profile, junimo: "verde", logros: [], dorado: false });
+      }
+      setFiesta(null);
+    } catch {
+      /* las reglas pueden rechazarlo */
+    }
+    setReiniciando(false);
   }
 
   async function ponerse(l: Logro) {
@@ -215,7 +245,16 @@ export default function RetosZone({ recipes, onClose }: Props) {
               })}
             </ul>
 
-            {completo && <p className="retos-win">🏆 ¡Habéis cocinado todo el libro!</p>}
+            {completo && <p className="retos-win">🏆 ¡Has cocinado todo el libro!</p>}
+
+            {isAdmin && (
+              <div className="retos-admin">
+                <button className="book-btn book-btn-ghost" onClick={reiniciar} disabled={reiniciando}>
+                  {reiniciando ? "Reiniciando…" : "↺ Reiniciar mis retos"}
+                </button>
+                <p>Solo para admin: borra tus sellos y tus junimos para volver a probarlo.</p>
+              </div>
+            )}
           </>
         )}
       </motion.div>

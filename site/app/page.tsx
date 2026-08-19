@@ -366,7 +366,7 @@ export default function Home() {
           </div>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/cocina/gallina.png" alt="" />
+        <img className="gallina" src="/cocina/gallina.png" alt="" />
       </footer>
 
       {isAdmin && (

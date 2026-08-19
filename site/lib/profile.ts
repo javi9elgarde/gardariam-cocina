@@ -218,3 +218,13 @@ export async function desbloquearLogros(uid: string, ids: Logro[]) {
     { merge: true },
   );
 }
+
+/**
+ * Solo para los admin: borra los sellos y los logros de un usuario, para poder
+ * probar de cero el sistema de retos y de junimos.
+ */
+export async function reiniciarRetos(uid: string) {
+  const snap = await getDocs(query(collection(db, "stamps"), where("uid", "==", uid)));
+  await Promise.all(snap.docs.map((d) => deleteDoc(doc(db, "stamps", d.id))));
+  await setDoc(doc(db, "profiles", uid), { logros: [], dorado: false }, { merge: true });
+}
