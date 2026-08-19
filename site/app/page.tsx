@@ -344,7 +344,7 @@ export default function Home() {
       {/* ---------- Pie ---------- */}
       <footer className="farm-foot">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/cocina/mascota-saluda.png" alt="" />
+        <img className="mascota-juni" src="/cocina/mascota-junimo.png" alt="" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="shelf-img" src="/cocina/shelf.png" alt="" />
         <div className="stats-panel">

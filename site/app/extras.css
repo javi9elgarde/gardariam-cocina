@@ -1312,3 +1312,11 @@ textarea.book-input {
   .fr-fields { flex-direction: column; }
   .fr-field { flex: none !important; width: 100%; }
 }
+
+/* ===== Junimo de la estantería (pie de la home) ===== */
+.farm-foot .mascota-juni {
+  image-rendering: pixelated;
+  align-self: flex-end;
+  /* algo más grande que las otras figuras: el dibujo lleva aire alrededor */
+  height: clamp(60px, 9vw, 100px);
+}
