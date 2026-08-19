@@ -162,7 +162,7 @@ export function useProfile() {
 
 /** Cambia el nombre/junimo en los comentarios y fotos ya publicados */
 async function renameEverywhere(uid: string, name: string, junimo: string) {
-  for (const col of ["comments", "photos"]) {
+  for (const col of ["comments", "photos", "stamps"]) {
     try {
       const snap = await getDocs(query(collection(db, col), where("uid", "==", uid)));
       await Promise.all(
@@ -180,6 +180,22 @@ export interface Stamp {
   id: string; // uid__recetaId
   uid: string;
   recipeId: string;
+  /** se guardan aquí para poder montar la clasificación leyendo solo los sellos */
+  name?: string;
+  junimo?: string;
+}
+
+/** Todos los sellos de todo el mundo (para la clasificación) */
+export function watchAllStamps(cb: (list: Stamp[]) => void): Unsubscribe {
+  return onSnapshot(
+    collection(db, "stamps"),
+    (snap) => {
+      const list: Stamp[] = [];
+      snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<Stamp, "id">) }));
+      cb(list);
+    },
+    () => cb([]),
+  );
 }
 
 export function watchMyStamps(uid: string, cb: (ids: string[]) => void): Unsubscribe {
@@ -197,10 +213,20 @@ export function watchMyStamps(uid: string, cb: (ids: string[]) => void): Unsubsc
   );
 }
 
-export async function toggleStamp(uid: string, recipeId: string, on: boolean) {
+export async function toggleStamp(
+  uid: string,
+  recipeId: string,
+  on: boolean,
+  perfil?: { name: string; junimo: string },
+) {
   const id = `${uid}__${recipeId}`;
   if (on) {
-    await setDoc(doc(db, "stamps", id), { uid, recipeId });
+    await setDoc(doc(db, "stamps", id), {
+      uid,
+      recipeId,
+      name: perfil?.name ?? "Cocinero",
+      junimo: perfil?.junimo ?? "verde",
+    });
   } else {
     await deleteDoc(doc(db, "stamps", id));
   }
@@ -227,4 +253,23 @@ export async function reiniciarRetos(uid: string) {
   const snap = await getDocs(query(collection(db, "stamps"), where("uid", "==", uid)));
   await Promise.all(snap.docs.map((d) => deleteDoc(doc(db, "stamps", d.id))));
   await setDoc(doc(db, "profiles", uid), { logros: [], dorado: false }, { merge: true });
+}
+
+/**
+ * Todos los perfiles, para poner nombres al día en la clasificación.
+ * Si las reglas no dejan listarlos, devuelve vacío y se usan los nombres
+ * guardados dentro de cada sello.
+ */
+export function watchAllProfiles(
+  cb: (m: Record<string, Profile>) => void,
+): Unsubscribe {
+  return onSnapshot(
+    collection(db, "profiles"),
+    (snap) => {
+      const m: Record<string, Profile> = {};
+      snap.forEach((d) => (m[d.id] = d.data() as Profile));
+      cb(m);
+    },
+    () => cb({}),
+  );
 }

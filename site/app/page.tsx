@@ -7,6 +7,7 @@ import LoadingScreen from "@/components/LoadingScreen";
 import ProfileSetup from "@/components/ProfileSetup";
 import RecipeDetail from "@/components/RecipeDetail";
 import RecipePanel from "@/components/RecipePanel";
+import Clasificacion from "@/components/Clasificacion";
 import RetosZone from "@/components/RetosZone";
 import { useAuth } from "@/lib/auth";
 import { junimoSrc, useProfile } from "@/lib/profile";
@@ -41,6 +42,8 @@ export default function Home() {
   const { profile, loaded: profileLoaded } = useProfile();
   const [editProfile, setEditProfile] = useState(false);
   const [showRetos, setShowRetos] = useState(false);
+  const [showClas, setShowClas] = useState(false);
+  const [menu, setMenu] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const [sonido, setSonido] = useState(true);
   useEffect(() => setSonido(sonidoActivo()), []);
@@ -117,9 +120,30 @@ export default function Home() {
           🏠 Hub
         </a>
         <div className="farm-links">
-          <button className="farm-link" onClick={() => { sfx.abrir(); setShowRetos(true); }}>
-            Retos
+          <button
+            className="farm-link"
+            onClick={() => { sfx.abrir(); setMenu((v) => !v); }}
+            aria-expanded={menu}
+          >
+            MENÚ
           </button>
+          {menu && (
+            <>
+              <div className="menu-back" onClick={() => setMenu(false)} />
+              <div className="farm-menu">
+                <button
+                  onClick={() => { setMenu(false); sfx.abrir(); setShowRetos(true); }}
+                >
+                  ⭐ Retos
+                </button>
+                <button
+                  onClick={() => { setMenu(false); sfx.abrir(); setShowClas(true); }}
+                >
+                  📊 Clasificación
+                </button>
+              </div>
+            </>
+          )}
         </div>
         <div className="farm-user">
           <button
@@ -420,6 +444,9 @@ export default function Home() {
       <AnimatePresence>
         {showRetos && (
           <RetosZone key="retos" recipes={recipes} onClose={() => setShowRetos(false)} />
+        )}
+        {showClas && (
+          <Clasificacion key="clas" recipes={recipes} onClose={() => setShowClas(false)} />
         )}
       </AnimatePresence>
 

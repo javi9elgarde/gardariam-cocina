@@ -1404,3 +1404,139 @@ textarea.book-input {
   .stats-panel b { font-size: 0.95rem; }
   .stats-panel span { font-size: 0.53rem; letter-spacing: 0.05em; }
 }
+
+/* ===== Menú desplegable de la barra ===== */
+.menu-back {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+}
+.farm-menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(100% + 8px);
+  z-index: 80;
+  min-width: 200px;
+  padding: 0.5rem;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #fdf6e4, #f0e2c2);
+  border: 2px solid #7a5228;
+  box-shadow: 0 12px 28px rgba(20, 14, 4, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.farm-menu button {
+  font-family: var(--font-display), serif;
+  font-size: 0.85rem;
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.farm-menu button:hover {
+  background: rgba(200, 154, 60, 0.22);
+}
+
+/* ===== Clasificación ===== */
+.clas-vacia {
+  padding: 1.6rem 0.5rem;
+  text-align: center;
+  font-size: 0.86rem;
+  color: #6b5636;
+}
+.clas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.clas-fila {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(255, 252, 240, 0.6);
+  border: 1.5px solid rgba(181, 138, 76, 0.55);
+}
+.clas-fila.is-podio {
+  background: linear-gradient(135deg, rgba(255, 245, 214, 0.95), rgba(246, 226, 176, 0.9));
+}
+.clas-fila.is-yo {
+  border-color: var(--oliva);
+  box-shadow: 0 0 0 2px rgba(124, 138, 68, 0.3);
+}
+.clas-puesto {
+  flex: 0 0 auto;
+  width: 1.8rem;
+  text-align: center;
+  font-family: var(--font-display), serif;
+  font-size: 1rem;
+  color: var(--nogal);
+}
+.clas-juni {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  image-rendering: pixelated;
+}
+.clas-datos {
+  flex: 1;
+  min-width: 0;
+}
+.clas-datos b {
+  display: block;
+  font-family: var(--font-display), serif;
+  font-size: 0.86rem;
+  color: var(--nogal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clas-datos b i {
+  font-style: normal;
+  font-size: 0.7rem;
+  color: var(--oliva);
+}
+.clas-bar {
+  display: block;
+  margin-top: 0.25rem;
+  height: 7px;
+  border-radius: 99px;
+  background: rgba(122, 82, 40, 0.2);
+  overflow: hidden;
+}
+.clas-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #9db356, var(--oliva));
+  transition: width 0.4s ease;
+}
+.clas-num {
+  flex: 0 0 auto;
+  text-align: center;
+  min-width: 2.6rem;
+}
+.clas-num b {
+  display: block;
+  font-family: var(--font-display), serif;
+  font-size: 1.05rem;
+  color: var(--granate);
+}
+.clas-num i {
+  font-style: normal;
+  font-size: 0.6rem;
+  color: #8a7350;
+}
+
+@media (max-width: 520px) {
+  .clas-juni { width: 30px; height: 30px; }
+  .clas-fila { gap: 0.45rem; padding: 0.4rem 0.45rem; }
+  .clas-datos b { font-size: 0.8rem; }
+}

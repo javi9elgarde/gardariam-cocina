@@ -113,7 +113,7 @@ export default function RetosZone({ recipes, onClose }: Props) {
     setBusy(r.id);
     if (!quitar) sfx.sello();
     try {
-      await toggleStamp(user.uid, r.id, !quitar);
+      await toggleStamp(user.uid, r.id, !quitar, profile ?? undefined);
     } catch {
       /* la regla puede rechazarlo */
     }
