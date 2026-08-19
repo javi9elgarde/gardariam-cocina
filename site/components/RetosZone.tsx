@@ -193,8 +193,7 @@ export default function RetosZone({ recipes, onClose }: Props) {
               <img className="fiesta-juni" src={junimoSrc(JUNIMO_DORADO)} alt="" />
               <h2>¡Libro completado!</h2>
               <p>
-                Has cocinado y demostrado <b>las {total} recetas</b> del libro. Has desbloqueado el{" "}
-                <b>Junimo Dorado</b>.
+                Has cocinado todas las recetas del libro y desbloqueado el <b>Junimo Dorado</b>.
               </p>
               <div className="fiesta-actions">
                 <button className="book-btn" onClick={ponerseDorado}>
