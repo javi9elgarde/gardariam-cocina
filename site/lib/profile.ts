@@ -14,7 +14,7 @@ import {
   where,
   type Unsubscribe,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { db } from "./firebase";
 import { useAuth } from "./auth";
 
@@ -69,6 +69,14 @@ const BODA_DESDE = Date.parse("2026-08-29T00:00:00+02:00");
 const BODA_HASTA = Date.parse("2026-09-01T23:59:59+02:00");
 
 /**
+ * Mery y Javi salen en la clasificación solo mientras se prueba. El día que
+ * empieza la boda y entra la gente de verdad, desaparecen de la tabla.
+ */
+export function ocultarAdminsEnClasificacion(): boolean {
+  return Date.now() >= BODA_DESDE;
+}
+
+/**
  * El junimo de boda se deduce de la fecha en que se creó la cuenta de Google,
  * que la pone Firebase y el usuario no puede tocar. Por eso no hace falta
  * guardarlo: no se puede hacer trampa con él.
@@ -100,6 +108,8 @@ export function logrosPorRetos(hechas: number, total: number): Logro[] {
 export interface Profile {
   name: string;
   junimo: string;
+  /** Mery y Javi: se marca solo, para poder sacarlos de la clasificación */
+  admin?: boolean;
   /** junimos de recompensa ya ganados */
   logros?: string[];
   /** antiguo: true cuando había sellado todas las recetas */
@@ -117,7 +127,7 @@ export function junimoSrc(j: string): string {
 /* ---------------- Perfil del usuario ---------------- */
 
 export function useProfile() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -137,6 +147,16 @@ export function useProfile() {
       () => setLoaded(true),
     );
   }, [user]);
+
+  /* Deja constancia en el perfil de quién es admin, sin tener que tocar nada */
+  const marcado = useRef(false);
+  useEffect(() => {
+    if (!user || !isAdmin || !profile || profile.admin || marcado.current) return;
+    marcado.current = true;
+    void setDoc(doc(db, "profiles", user.uid), { admin: true }, { merge: true }).catch(() => {
+      marcado.current = false;
+    });
+  }, [user, isAdmin, profile]);
 
   async function save(p: Profile) {
     if (!user) return;

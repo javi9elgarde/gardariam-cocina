@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import {
   junimoSrc,
+  ocultarAdminsEnClasificacion,
   useProfile,
   watchAllProfiles,
   watchAllStamps,
@@ -38,6 +39,8 @@ export default function Clasificacion({ recipes, onClose }: Props) {
 
   const total = recipes.length;
   const idsValidos = new Set(recipes.map((r) => r.id));
+  // hasta la boda, Mery y Javi salen en la tabla para poder probarla
+  const sinAdmins = ocultarAdminsEnClasificacion();
 
   // se agrupa por persona; el nombre y el junimo vienen en el propio sello
   const porUid = new Map<string, Fila>();
@@ -61,6 +64,7 @@ export default function Clasificacion({ recipes, onClose }: Props) {
     const perfil = uid === user?.uid ? (profile ?? perfiles[uid]) : perfiles[uid];
     if (perfil?.name) fila.name = perfil.name;
     if (perfil?.junimo) fila.junimo = perfil.junimo;
+    if (sinAdmins && perfil?.admin) porUid.delete(uid);
   }
 
   const filas = [...porUid.values()].sort(
