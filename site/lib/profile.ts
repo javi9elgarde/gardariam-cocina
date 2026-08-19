@@ -29,16 +29,26 @@ export const JUNIMOS = [
 
 export type Junimo = (typeof JUNIMOS)[number];
 
+/** Recompensa: no se puede elegir, se desbloquea sellando todo el libro */
+export const JUNIMO_DORADO = "dorado";
+
+/** ¿este junimo hay que desbloquearlo? */
+export function esBloqueado(j: string): boolean {
+  return j === JUNIMO_DORADO;
+}
+
 export interface Profile {
   name: string;
-  junimo: Junimo;
+  junimo: string;
+  /** true cuando ha sellado todas las recetas del libro */
+  dorado?: boolean;
 }
 
 /** Se sube al cambiar los dibujos, para que nadie se quede con la versión antigua en caché */
-const JUNIMO_VER = "2";
+const JUNIMO_VER = "3";
 
 export function junimoSrc(j: string): string {
-  const color = JUNIMOS.includes(j as Junimo) ? j : "verde";
+  const color = j === JUNIMO_DORADO || JUNIMOS.includes(j as Junimo) ? j : "verde";
   return `/cocina/junimos/${color}.png?v=${JUNIMO_VER}`;
 }
 
@@ -69,13 +79,17 @@ export function useProfile() {
   async function save(p: Profile) {
     if (!user) return;
     const name = p.name.trim().slice(0, 24);
+    // el dorado solo se puede llevar si está desbloqueado
+    const dorado = p.dorado ?? profile?.dorado ?? false;
+    const junimo = p.junimo === JUNIMO_DORADO && !dorado ? "verde" : p.junimo;
     await setDoc(doc(db, "profiles", user.uid), {
       name,
-      junimo: p.junimo,
+      junimo,
+      dorado,
       uid: user.uid,
     });
     // el nombre y el junimo nuevos se aplican también a lo ya publicado
-    await renameEverywhere(user.uid, name, p.junimo);
+    await renameEverywhere(user.uid, name, junimo);
   }
 
   return { profile, loaded, save };
@@ -125,4 +139,9 @@ export async function toggleStamp(uid: string, recipeId: string, on: boolean) {
   } else {
     await deleteDoc(doc(db, "stamps", id));
   }
+}
+
+/** Marca el logro en el perfil para que el dorado no se pierda */
+export async function desbloquearDorado(uid: string) {
+  await setDoc(doc(db, "profiles", uid), { dorado: true }, { merge: true });
 }

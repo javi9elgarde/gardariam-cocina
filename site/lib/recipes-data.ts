@@ -321,6 +321,36 @@ export const RECIPE_DATA: Record<string, RecipeData> = {
     tip: "Una vez repartido el arroz, no lo toques más. Ahí está el secreto.",
   },
 
+  "salsa-ajoyaki": {
+    story:
+      "Nuestra salsa comodín. Nació dentro del Brioche de Costillas, pero acabó saliendo de la receta para acompañarlo casi todo: carnes, patatas, bocadillos... Es de esas cosas que haces una vez y ya no dejas de hacer.",
+    difficulty: "Fácil",
+    ingredients: [
+      { qty: "1", name: "Ajo entero" },
+      { name: "Aceite de oliva" },
+      { name: "Sal" },
+      { qty: "2 cucharadas", name: "Mayonesa", note: "grandes" },
+      { name: "Cayena", note: "un poco" },
+      { name: "Salsa teriyaki", note: "un chorro" },
+      { name: "Pimienta negra" },
+    ],
+    steps: [
+      {
+        title: "Asar el ajo",
+        text: "Cogemos un ajo entero y le quitamos con un corte horizontal la parte superior. Echamos aceite, sal y lo envolvemos en papel de aluminio. Al horno o airfryer, 35-40 min a 180º.",
+      },
+      {
+        title: "Sacar la crema de ajo",
+        text: "Pasado el tiempo abrimos y, con cuidado de no quemarnos, presionamos el ajo por los lados para que salga como una crema. Lo recogemos todo en un cuenco.",
+      },
+      {
+        title: "Mezclar",
+        text: "Al cuenco le ponemos un par de cucharadas grandes de mayonesa, un poco de cayena, un chorro de salsa teriyaki y pimienta negra. Mezclamos hasta que quede homogénea.",
+      },
+    ],
+    tip: "Cuanto más tiempo repose en la nevera, más se asienta el sabor del ajo asado.",
+  },
+
   brioche: {
     story:
       "Esta receta seguramente sea con la que más hemos triunfado en muchas de nuestras quedadas con familia y amigos. Un combo ganador que junto con nuestra salsa ajoyaki seguro que podéis triunfar en alguna comida/cena que tengáis. Espero que probéis a hacerla y la disfrutéis.",

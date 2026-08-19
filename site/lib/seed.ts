@@ -20,6 +20,7 @@ const HAS_ICON = new Set<string>([
   "tarta-coulant",
   "tarta-queso",
   "cookies",
+  "salsa-ajoyaki",
 ]);
 
 /** Recetas del libro (páginas ilustradas ya finales). Se muestran siempre;
@@ -31,6 +32,10 @@ interface Seed {
   prepMinutes: number;
   persons: number;
   pages2: boolean;
+  /** orden en la lista cuando no tiene página propia (permite decimales) */
+  orden?: number;
+  /** páginas del libro a mostrar, si no son las suyas propias */
+  paginas?: string[];
 }
 
 const S: Seed[] = [
@@ -51,23 +56,35 @@ const S: Seed[] = [
   { id: "tarta-coulant", title: "Tarta Coulant", category: "Postres", prepMinutes: 50, persons: 6, pages2: true },
   { id: "tarta-queso", title: "Tarta de Queso de Mery", category: "Postres", prepMinutes: 60, persons: 8, pages2: true },
   { id: "cookies", title: "Cookies Blanditas", category: "Postres", prepMinutes: 30, persons: 4, pages2: true },
+  // La salsa vive dentro de la página del Brioche, pero tiene ficha propia
+  {
+    id: "salsa-ajoyaki",
+    title: "Salsa Ajoyaki",
+    category: "Salsas y bases",
+    prepMinutes: 45,
+    persons: 4,
+    pages2: false,
+    orden: 26.5,
+    paginas: ["/cocina/paginas/brioche-1.jpg"],
+  },
 ];
 
 /** Orden = el mismo que en el libro físico (por número de página) */
-const BOOK_ORDER: string[] = [...S]
-  .map((r) => r.id)
-  .sort((a, b) => (RECIPE_PAGE[a] ?? 999) - (RECIPE_PAGE[b] ?? 999));
+const posicion = (r: Seed) => r.orden ?? RECIPE_PAGE[r.id] ?? 999;
+const BOOK_ORDER: string[] = [...S].sort((a, b) => posicion(a) - posicion(b)).map((r) => r.id);
 
 export const SEED_RECIPES: Recipe[] = S.map((r) => ({
   id: r.id,
   title: r.title,
-  photoUrl: `/cocina/paginas/${r.id}-card.jpg`,
+  photoUrl: r.paginas ? `/cocina/iconos/${r.id}.jpg` : `/cocina/paginas/${r.id}-card.jpg`,
   iconUrl: HAS_ICON.has(r.id) ? `/cocina/iconos/${r.id}.jpg` : "",
-  bookPage: RECIPE_PAGE[r.id],
+  bookPage: RECIPE_PAGE[r.id] ?? (r.orden !== undefined ? Math.floor(r.orden) : undefined),
   sortIndex: BOOK_ORDER.indexOf(r.id),
-  pages: r.pages2
-    ? [`/cocina/paginas/${r.id}-0.jpg`, `/cocina/paginas/${r.id}-1.jpg`]
-    : [`/cocina/paginas/${r.id}-0.jpg`],
+  pages:
+    r.paginas ??
+    (r.pages2
+      ? [`/cocina/paginas/${r.id}-0.jpg`, `/cocina/paginas/${r.id}-1.jpg`]
+      : [`/cocina/paginas/${r.id}-0.jpg`]),
   category: r.category,
   rating: 5,
   prepMinutes: r.prepMinutes,

@@ -50,6 +50,15 @@ export default function Home() {
   const [detail, setDetail] = useState<Recipe | null>(null);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  /** cambia de filtro con su sonidito: uno al elegir y otro al quitar */
+  const elegirCat = (id: string | null) => {
+    setCat((actual) => {
+      const nuevo = actual === id ? null : id;
+      if (nuevo === null) sfx.filtroOff();
+      else sfx.filtro();
+      return nuevo;
+    });
+  };
   const [readerPage, setReaderPage] = useState<number | null>(null);
   const dragId = useRef<string | null>(null);
 
@@ -189,7 +198,7 @@ export default function Home() {
             <div className="farm-cats">
               <button
                 className={`cat-icon-btn ${cat === null ? "active" : ""}`}
-                onClick={() => setCat(null)}
+                onClick={() => { sfx.filtroOff(); setCat(null); }}
                 title="Todas"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -199,7 +208,7 @@ export default function Home() {
                 <button
                   key={c.id}
                   className={`cat-icon-btn ${cat === c.id ? "active" : ""}`}
-                  onClick={() => setCat(cat === c.id ? null : c.id)}
+                  onClick={() => elegirCat(c.id)}
                   title={c.id}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -208,7 +217,7 @@ export default function Home() {
               ))}
               <button
                 className={`cat-icon-btn ${cat === FAV ? "active" : ""}`}
-                onClick={() => setCat(cat === FAV ? null : FAV)}
+                onClick={() => elegirCat(FAV)}
                 title="Favoritas"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

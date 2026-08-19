@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import {
   BOOK_PAGES,
@@ -10,12 +10,8 @@ import {
   COVER_SRC_HD,
   pageSrc,
   pageSrcHD,
-  recipeIdForPage,
 } from "@/lib/book";
-import IngredientsPanel from "@/components/IngredientsPanel";
 import { sfx } from "@/lib/sfx";
-import { getRecipe } from "@/lib/storage";
-import type { Recipe } from "@/lib/types";
 
 /** -1 = portada del libro */
 export const COVER = -1;
@@ -31,8 +27,6 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
   const [page, setPage] = useState(startPage);
   const [zoom, setZoom] = useState(false);
   const [isWide, setIsWide] = useState(true);
-  const [ficha, setFicha] = useState(false);
-  const [ings, setIngs] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 900px)");
@@ -51,7 +45,6 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
   const go = useCallback(
     (d: number) => {
       sfx.pagina();
-      setFicha(false);
       setPage((p) => {
         if (p === COVER) return d > 0 ? 0 : COVER; // desde la portada solo se avanza
         if (p === BACK) return d < 0 ? (isWide ? BOOK_PAGES - 2 : BOOK_PAGES - 1) : BACK;
@@ -65,6 +58,11 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
     },
     [isWide],
   );
+
+  const irA = useCallback((p: number) => {
+    sfx.pagina();
+    setPage(p);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -81,11 +79,8 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
   const sectionLabel = isCover
     ? "Portada"
     : isBack
-    ? "Contraportada"
-    : ([...BOOK_SECTIONS].reverse().find((s) => s.page <= left)?.label ?? "");
-
-  const recipeId = isCover || isBack ? null : recipeIdForPage(left, right);
-  const recipe: Recipe | undefined = recipeId ? getRecipe(recipeId) : undefined;
+      ? "Contraportada"
+      : ([...BOOK_SECTIONS].reverse().find((s) => s.page <= left)?.label ?? "");
 
   return (
     <motion.div
@@ -98,24 +93,13 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
         <button className="book-top-link" onClick={onClose}>
           ← Volver
         </button>
-        <span className="reader-title">📖 Mariam y Javi — Libro de Cocina</span>
+        <span className="reader-title">Libro de Cocina</span>
         <div className="reader-bar-right">
-          {!isCover && (
-            <button className="book-top-link" onClick={() => setPage(COVER)}>
-              Portada
-            </button>
-          )}
-          {recipe && (
-            <button className="book-top-link" onClick={() => setIngs((v) => !v)}>
-              🧺 Ingredientes
-            </button>
-          )}
-          {recipe && (
-            <button className="book-top-link" onClick={() => setFicha((f) => !f)}>
-              {ficha ? "Ocultar ficha" : "📋 Ficha"}
-            </button>
-          )}
-          <button className="book-top-link" onClick={() => setZoom((z) => !z)}>
+          <button
+            className="book-top-link"
+            onClick={() => setZoom((z) => !z)}
+            aria-pressed={zoom}
+          >
             {zoom ? "Reducir" : "Ampliar"}
           </button>
         </div>
@@ -126,16 +110,13 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
           className="reader-arrow left"
           onClick={() => go(-1)}
           disabled={atStart}
-          aria-label="Anterior"
+          aria-label="Página anterior"
         >
           ‹
         </button>
 
         {/* Sin animación de pasar hoja: se muestra directamente */}
-        <div
-          className="reader-spread"
-          onClick={() => setZoom((z) => !z)}
-        >
+        <div className="reader-spread" onClick={() => setZoom((z) => !z)}>
           {isBack ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img className="reader-page" src={BACK_SRC} alt="Contraportada del libro" />
@@ -170,60 +151,10 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
           className="reader-arrow right"
           onClick={() => go(1)}
           disabled={atEnd}
-          aria-label="Siguiente"
+          aria-label="Página siguiente"
         >
           ›
         </button>
-
-        {/* Ingredientes marcables */}
-        <AnimatePresence>
-          {ings && recipe && (
-            <IngredientsPanel recipe={recipe} onClose={() => setIngs(false)} />
-          )}
-        </AnimatePresence>
-
-        {/* Ficha resumen */}
-        <AnimatePresence>
-          {ficha && recipe && (
-            <motion.aside
-              className="ficha"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 30 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <div className="ficha-tape" />
-              <h3 className="ficha-title">{recipe.title}</h3>
-              <div className="ficha-stars">
-                {"★".repeat(Math.max(1, Math.min(5, recipe.rating || 5)))}
-              </div>
-              <dl className="ficha-data">
-                <div>
-                  <dt>Categoría</dt>
-                  <dd>{recipe.category || "—"}</dd>
-                </div>
-                <div>
-                  <dt>Tiempo</dt>
-                  <dd>⏱ {recipe.prepMinutes} min</dd>
-                </div>
-                <div>
-                  <dt>Raciones</dt>
-                  <dd>👤 {recipe.persons ?? 2} pers.</dd>
-                </div>
-                <div>
-                  <dt>Páginas</dt>
-                  <dd>
-                    {left + 1}
-                    {isWide && right < BOOK_PAGES ? `–${right + 1}` : ""}
-                  </dd>
-                </div>
-              </dl>
-              <button className="book-btn book-btn-ghost ficha-btn" onClick={() => setZoom(true)}>
-                🔍 Ampliar página
-              </button>
-            </motion.aside>
-          )}
-        </AnimatePresence>
       </div>
 
       <div className="reader-foot">
@@ -241,20 +172,14 @@ export default function BookReader({ startPage = COVER, onClose }: BookReaderPro
           )}
         </p>
         <div className="reader-sections">
-          <button
-            className={`reader-sec ${isCover ? "active" : ""}`}
-            onClick={() => setPage(COVER)}
-          >
+          <button className={`reader-sec ${isCover ? "active" : ""}`} onClick={() => irA(COVER)}>
             📕 Portada
           </button>
           {BOOK_SECTIONS.filter((s) => s.id !== "portada").map((s) => (
             <button
               key={s.id}
               className={`reader-sec ${!isCover && left >= s.page && left < s.page + 2 ? "active" : ""}`}
-              onClick={() => {
-                setFicha(false);
-                setPage(s.page);
-              }}
+              onClick={() => irA(s.page)}
             >
               {s.emoji} {s.label}
             </button>

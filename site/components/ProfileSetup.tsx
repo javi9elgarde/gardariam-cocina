@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { JUNIMOS, junimoSrc, useProfile, type Junimo, type Profile } from "@/lib/profile";
+import { JUNIMOS, JUNIMO_DORADO, junimoSrc, useProfile, type Profile } from "@/lib/profile";
 
 interface Props {
   /** perfil actual (null = primera vez) */
@@ -15,14 +15,15 @@ export default function ProfileSetup({ current, onDone }: Props) {
   const { user } = useAuth();
   const { save } = useProfile();
   const [name, setName] = useState(current?.name ?? user?.displayName?.split(" ")[0] ?? "");
-  const [junimo, setJunimo] = useState<Junimo>(current?.junimo ?? "verde");
+  const [junimo, setJunimo] = useState<string>(current?.junimo ?? "verde");
+  const dorado = current?.dorado ?? false;
   const [busy, setBusy] = useState(false);
 
   async function guardar() {
     if (!name.trim()) return;
     setBusy(true);
     try {
-      await save({ name, junimo });
+      await save({ name, junimo, dorado });
       onDone();
     } catch {
       setBusy(false);
@@ -81,7 +82,27 @@ export default function ProfileSetup({ current, onDone }: Props) {
               <img src={junimoSrc(j)} alt="" />
             </button>
           ))}
+
+          {/* Recompensa por sellar todo el libro */}
+          <button
+            className={`prof-juni prof-juni-oro ${junimo === JUNIMO_DORADO ? "is-sel" : ""} ${
+              dorado ? "" : "is-locked"
+            }`}
+            onClick={() => dorado && setJunimo(JUNIMO_DORADO)}
+            disabled={!dorado}
+            title={dorado ? "Junimo dorado" : "Se desbloquea al sellar todo el libro"}
+            aria-label={dorado ? "Junimo dorado" : "Junimo dorado (bloqueado)"}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={junimoSrc(JUNIMO_DORADO)} alt="" />
+            {!dorado && <span className="prof-juni-lock">🔒</span>}
+          </button>
         </div>
+        {!dorado && (
+          <p className="prof-oro-hint">
+            🔒 El <b>junimo dorado</b> se desbloquea al completar todos los retos del libro.
+          </p>
+        )}
 
         <div className="prof-actions">
           <button className="book-btn" onClick={guardar} disabled={busy || !name.trim()}>
